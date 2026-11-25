@@ -65,7 +65,7 @@ jobs:
           ditto -c -k --sequesterRsrc --keepParent "$APP_PATH" "build/MyNotch-${CONFIG}.zip"
 
       - name: Upload MyNotch app artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: MyNotch-${{ inputs.configuration || 'Release' }}
           path: build/MyNotch-${{ inputs.configuration || 'Release' }}.zip
