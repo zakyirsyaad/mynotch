@@ -5,8 +5,11 @@
 //  Created by Richard Kunkli on 2024. 10. 17..
 //
 
+import AgentMonitorKit
 import SwiftUI
 import Defaults
+
+extension CustomAgentRule: Defaults.Serializable {}
 
 private let availableDirectories = FileManager
     .default
@@ -199,4 +202,11 @@ extension Defaults.Keys {
     }
 
     static let didClearLegacyURLCacheV1 = Key<Bool>("didClearLegacyURLCache_v1", default: false)
+
+    // MARK: Agents
+    static let agentMonitorEnabled = Key<Bool>("agentMonitorEnabled", default: true)
+    static let agentNotifyWaiting = Key<Bool>("agentNotifyWaiting", default: true)
+    static let agentNotifyError = Key<Bool>("agentNotifyError", default: true)
+    static let agentNotifyDone = Key<Bool>("agentNotifyDone", default: true)
+    static let agentCustomRules = Key<[CustomAgentRule]>("agentCustomRules", default: [])
 }

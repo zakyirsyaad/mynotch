@@ -82,6 +82,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             screenUnlockedObserver = nil
         }
         MusicManager.shared.destroy()
+        Task { @MainActor in
+            AgentMonitorManager.shared.stop()
+        }
         cleanupDragDetectors()
         cleanupWindows()
         XPCHelperClient.shared.stopMonitoringAccessibilityAuthorization()
@@ -435,6 +438,28 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         previousScreens = NSScreen.screens
+
+        Task { @MainActor in
+            let monitor = AgentMonitorManager.shared
+            monitor.notchContextProvider = { [weak self] in
+                guard let self else { return (false, false) }
+                if Defaults[.showOnAllDisplays] {
+                    let activeVMs = Array(self.viewModels.values)
+                    let anyOpen = activeVMs.contains { $0.notchState == .open }
+                    let allHidden = !activeVMs.isEmpty && activeVMs.allSatisfy(\.hideOnClosed)
+                    return (anyOpen, allHidden)
+                }
+                return (self.vm.notchState == .open, self.vm.hideOnClosed)
+            }
+            monitor.onNotice = { notice in
+                BoringViewCoordinator.shared.toggleExpandingView(
+                    status: true,
+                    type: .agent,
+                    agent: notice
+                )
+            }
+            monitor.start()
+        }
     }
 
     func playWelcomeSound() {

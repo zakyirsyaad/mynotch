@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		A10000032F00000100000001 /* AgentMonitorKit in Frameworks */ = {isa = PBXBuildFile; productRef = A10000022F00000100000001 /* AgentMonitorKit */; };
+		A10000072F00000100000001 /* AgentsSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000062F00000100000001 /* AgentsSettingsView.swift */; };
 		1100290C2E847E2800035A57 /* NSItemProvider+LoadHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1100290B2E847E2800035A57 /* NSItemProvider+LoadHelpers.swift */; };
 		110029272E84FD4C00035A57 /* TemporaryFileStorageService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 110029262E84FD4C00035A57 /* TemporaryFileStorageService.swift */; };
 		1100292A2E8691B400035A57 /* FileShareView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 110029292E8691B400035A57 /* FileShareView.swift */; };
@@ -181,6 +183,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		A10000062F00000100000001 /* AgentsSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentsSettingsView.swift; sourceTree = "<group>"; };
 		1100290B2E847E2800035A57 /* NSItemProvider+LoadHelpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSItemProvider+LoadHelpers.swift"; sourceTree = "<group>"; };
 		110029262E84FD4C00035A57 /* TemporaryFileStorageService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TemporaryFileStorageService.swift; sourceTree = "<group>"; };
 		110029292E8691B400035A57 /* FileShareView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileShareView.swift; sourceTree = "<group>"; };
@@ -322,6 +325,8 @@
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
+		A10000042F00000100000001 /* AgentMonitor */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = managers/AgentMonitor; sourceTree = "<group>"; };
+		A10000052F00000100000001 /* Agents */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = components/Agents; sourceTree = "<group>"; };
 		112FB72F2CCF12CC0015238C /* private */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = private; sourceTree = "<group>"; };
 		11F748502EC9AABA00F841DB /* BoringNotchXPCHelper */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (11F7485C2EC9AABA00F841DB /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = BoringNotchXPCHelper; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -338,6 +343,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A10000032F00000100000001 /* AgentMonitorKit in Frameworks */,
 				111BEA5F2ED07A340079DD4E /* MacroVisionKit in Frameworks */,
 				9A987A102C73CA8D005CA465 /* Collections in Frameworks */,
 				1194E8852EA57D23009C82D6 /* SkyLightWindow in Frameworks */,
@@ -583,6 +589,8 @@
 				14CEF41E2C5CAED400855D72 /* boringNotch.entitlements */,
 				14CEF41B2C5CAED400855D72 /* Preview Content */,
 				112FB72F2CCF12CC0015238C /* private */,
+				A10000042F00000100000001 /* AgentMonitor */,
+				A10000052F00000100000001 /* Agents */,
 				11CC44A12CEE614100C7244B /* BoringViewCoordinator.swift */,
 			);
 			path = boringNotch;
@@ -719,6 +727,7 @@
 			children = (
 				11F748832ECB27DC00F841DB /* MusicSlotConfigurationView.swift */,
 				11C5E3152DFE88510065821E /* SettingsView.swift */,
+				A10000062F00000100000001 /* AgentsSettingsView.swift */,
 				11C5E3112DFE85970065821E /* SettingsWindowController.swift */,
 				B1D6FD422C6603730015F173 /* SoftwareUpdater.swift */,
 				B1B112902C6A572100093D8F /* EditPanelView.swift */,
@@ -799,9 +808,12 @@
 			);
 			fileSystemSynchronizedGroups = (
 				112FB72F2CCF12CC0015238C /* private */,
+				A10000042F00000100000001 /* AgentMonitor */,
+				A10000052F00000100000001 /* Agents */,
 			);
 			name = boringNotch;
 			packageProductDependencies = (
+				A10000022F00000100000001 /* AgentMonitorKit */,
 				14D032192C68F32E0096E6A1 /* LaunchAtLogin */,
 				14D0321C2C68F3350096E6A1 /* Sparkle */,
 				B18654382C6F4990000B926A /* KeyboardShortcuts */,
@@ -848,6 +860,7 @@
 			);
 			mainGroup = 14CEF4092C5CAED200855D72;
 			packageReferences = (
+				A10000012F00000100000001 /* XCLocalSwiftPackageReference "AgentMonitorKit" */,
 				14D032182C68F32E0096E6A1 /* XCRemoteSwiftPackageReference "LaunchAtLogin-Modern" */,
 				14D0321B2C68F3350096E6A1 /* XCRemoteSwiftPackageReference "Sparkle" */,
 				B18654372C6F4990000B926A /* XCRemoteSwiftPackageReference "KeyboardShortcuts" */,
@@ -905,6 +918,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A10000072F00000100000001 /* AgentsSettingsView.swift in Sources */,
 				115C12EC2ED3D003009754CA /* OpenNotchHUD.swift in Sources */,
 				14C08BB92C8DE4B1000F8AA0 /* BoringCalendar.swift in Sources */,
 				5955950D2E900ED800C66711 /* ApplicationRelauncher.swift in Sources */,
@@ -1349,6 +1363,13 @@
 		};
 /* End XCConfigurationList section */
 
+/* Begin XCLocalSwiftPackageReference section */
+		A10000012F00000100000001 /* XCLocalSwiftPackageReference "AgentMonitorKit" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = AgentMonitorKit;
+		};
+/* End XCLocalSwiftPackageReference section */
+
 /* Begin XCRemoteSwiftPackageReference section */
 		111BE95B2ECD71E10079DD4E /* XCRemoteSwiftPackageReference "AsyncXPCConnection" */ = {
 			isa = XCRemoteSwiftPackageReference;
@@ -1441,6 +1462,11 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		A10000022F00000100000001 /* AgentMonitorKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A10000012F00000100000001 /* XCLocalSwiftPackageReference "AgentMonitorKit" */;
+			productName = AgentMonitorKit;
+		};
 		111BE95C2ECD71E10079DD4E /* AsyncXPCConnection */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 111BE95B2ECD71E10079DD4E /* XCRemoteSwiftPackageReference "AsyncXPCConnection" */;

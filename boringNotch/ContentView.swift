@@ -65,6 +65,10 @@ struct ContentView: View {
             && vm.notchState == .closed && Defaults[.showPowerStatusNotifications]
         {
             chinWidth = 640
+        } else if coordinator.expandingView.type == .agent && coordinator.expandingView.show
+            && vm.notchState == .closed && !vm.hideOnClosed
+        {
+            chinWidth = agentNoticeWidth
         } else if (!coordinator.expandingView.show || coordinator.expandingView.type == .music)
             && vm.notchState == .closed && (musicManager.isPlaying || !musicManager.isPlayerIdle)
             && coordinator.musicLiveActivityEnabled && !vm.hideOnClosed
@@ -284,6 +288,11 @@ struct ContentView: View {
                             .frame(width: 76, alignment: .trailing)
                         }
                         .frame(height: vm.effectiveClosedNotchHeight, alignment: .center)
+                      } else if coordinator.expandingView.type == .agent && coordinator.expandingView.show
+                            && vm.notchState == .closed && !vm.hideOnClosed,
+                            let notice = coordinator.expandingView.agent
+                      {
+                          AgentNoticeView(notice: notice)
                       } else if coordinator.sneakPeek.show && Defaults[.inlineHUD] && (coordinator.sneakPeek.type != .music) && (coordinator.sneakPeek.type != .battery) && vm.notchState == .closed {
                           InlineHUD(type: $coordinator.sneakPeek.type, value: $coordinator.sneakPeek.value, icon: $coordinator.sneakPeek.icon, hoverAnimation: $isHovering, gestureProgress: $gestureProgress)
                               .transition(.opacity)
@@ -349,6 +358,8 @@ struct ContentView: View {
                         NotchHomeView(albumArtNamespace: albumArtNamespace)
                     case .shelf:
                         ShelfView()
+                    case .agents:
+                        AgentsTabView()
                     }
                 }
                 .transition(
@@ -503,6 +514,10 @@ struct ContentView: View {
     }
 
     private func doOpen() {
+        if coordinator.expandingView.show && coordinator.expandingView.type == .agent {
+            coordinator.currentView = .agents
+            coordinator.toggleExpandingView(status: false, type: .agent)
+        }
         withAnimation(animationSpring) {
             vm.open()
         }
@@ -526,6 +541,13 @@ struct ContentView: View {
             guard vm.notchState == .closed,
                   !coordinator.sneakPeek.show,
                   Defaults[.openNotchOnHover] else { return }
+
+            if coordinator.expandingView.show && coordinator.expandingView.type == .agent {
+                coordinator.currentView = .agents
+                coordinator.toggleExpandingView(status: false, type: .agent)
+                self.doOpen()
+                return
+            }
             
             hoverTask = Task {
                 try? await Task.sleep(for: .seconds(Defaults[.minimumHoverDuration]))

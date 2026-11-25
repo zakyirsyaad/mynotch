@@ -5,23 +5,33 @@
 //  Created by Hugo Persson on 2024-08-25.
 //
 
+import Defaults
 import SwiftUI
 
 struct TabModel: Identifiable {
-    let id = UUID()
+    var id: NotchViews { view }
     let label: String
     let icon: String
     let view: NotchViews
 }
 
-let tabs = [
-    TabModel(label: "Home", icon: "house.fill", view: .home),
-    TabModel(label: "Shelf", icon: "tray.fill", view: .shelf)
-]
-
 struct TabSelectionView: View {
     @ObservedObject var coordinator = BoringViewCoordinator.shared
+    @Default(.boringShelf) private var boringShelf
+    @Default(.agentMonitorEnabled) private var agentMonitorEnabled
     @Namespace var animation
+
+    private var tabs: [TabModel] {
+        var list = [TabModel(label: "Home", icon: "house.fill", view: .home)]
+        if boringShelf {
+            list.append(TabModel(label: "Shelf", icon: "tray.fill", view: .shelf))
+        }
+        if agentMonitorEnabled {
+            list.append(TabModel(label: "Agents", icon: "sparkles", view: .agents))
+        }
+        return list
+    }
+
     var body: some View {
         HStack(spacing: 0) {
             ForEach(tabs) { tab in

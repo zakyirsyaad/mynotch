@@ -5,6 +5,7 @@
 //  Created by Alexander on 2024-11-20.
 //
 
+import AgentMonitorKit
 import AppKit
 import Combine
 import Defaults
@@ -18,6 +19,7 @@ enum SneakContentType {
     case mic
     case battery
     case download
+    case agent
 }
 
 struct sneakPeek {
@@ -44,6 +46,7 @@ struct ExpandedItem {
     var type: SneakContentType = .battery
     var value: CGFloat = 0
     var browser: BrowserType = .chromium
+    var agent: AgentNotice? = nil
 }
 
 @MainActor
@@ -263,7 +266,8 @@ class BoringViewCoordinator: ObservableObject {
         status: Bool,
         type: SneakContentType,
         value: CGFloat = 0,
-        browser: BrowserType = .chromium
+        browser: BrowserType = .chromium,
+        agent: AgentNotice? = nil
     ) {
         Task { @MainActor in
             withAnimation(.smooth) {
@@ -271,6 +275,7 @@ class BoringViewCoordinator: ObservableObject {
                 self.expandingView.type = type
                 self.expandingView.value = value
                 self.expandingView.browser = browser
+                self.expandingView.agent = status ? agent : nil
             }
         }
     }
@@ -281,7 +286,7 @@ class BoringViewCoordinator: ObservableObject {
         didSet {
             if expandingView.show {
                 expandingViewTask?.cancel()
-                let duration: TimeInterval = (expandingView.type == .download ? 2 : 3)
+                let duration: TimeInterval = expandingView.agent?.duration ?? (expandingView.type == .download ? 2 : 3)
                 let currentType = expandingView.type
                 expandingViewTask = Task { [weak self] in
                     try? await Task.sleep(for: .seconds(duration))
