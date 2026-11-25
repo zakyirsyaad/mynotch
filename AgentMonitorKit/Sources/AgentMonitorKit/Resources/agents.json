@@ -1,0 +1,137 @@
+[
+  {
+    "id": "claude-code",
+    "displayName": "Claude Code",
+    "match": {
+      "executable": ["claude"],
+      "argvContains": []
+    },
+    "appBundleIDs": ["com.anthropic.claudefordesktop"],
+    "hooks": {
+      "format": "claude",
+      "config": "~/.claude/settings.json",
+      "events": [
+        "SessionStart",
+        "UserPromptSubmit",
+        "PostToolUse",
+        "Notification",
+        "Stop",
+        "SubagentStart",
+        "SubagentStop",
+        "StopFailure",
+        "SessionEnd"
+      ]
+    }
+  },
+  {
+    "id": "codex",
+    "displayName": "Codex",
+    "match": {
+      "executable": ["codex"],
+      "argvContains": []
+    },
+    "appBundleIDs": [],
+    "hooks": {
+      "format": "claude",
+      "config": "~/.codex/hooks.json",
+      "events": [
+        "SessionStart",
+        "UserPromptSubmit",
+        "PermissionRequest",
+        "PostToolUse",
+        "Stop",
+        "SubagentStop"
+      ]
+    }
+  },
+  {
+    "id": "gemini-cli",
+    "displayName": "Gemini CLI",
+    "match": {
+      "executable": ["gemini"],
+      "argvContains": ["gemini"]
+    },
+    "appBundleIDs": ["com.google.GeminiMacOS"],
+    "hooks": null
+  },
+  {
+    "id": "cursor-agent",
+    "displayName": "Cursor Agent",
+    "match": {
+      "executable": ["cursor-agent"],
+      "argvContains": []
+    },
+    "appBundleIDs": ["com.todesktop.230313mzl4w4u92"],
+    "hooks": null
+  },
+  {
+    "id": "aider",
+    "displayName": "Aider",
+    "match": {
+      "executable": ["aider"],
+      "argvContains": ["aider"]
+    },
+    "appBundleIDs": [],
+    "hooks": null
+  },
+  {
+    "id": "opencode",
+    "displayName": "OpenCode",
+    "match": {
+      "executable": ["opencode"],
+      "argvContains": ["opencode"]
+    },
+    "appBundleIDs": [],
+    "hooks": null
+  },
+  {
+    "id": "goose",
+    "displayName": "Goose",
+    "match": {
+      "executable": ["goose"],
+      "argvContains": []
+    },
+    "appBundleIDs": [],
+    "hooks": null
+  },
+  {
+    "id": "amp",
+    "displayName": "Amp",
+    "match": {
+      "executable": ["amp"],
+      "argvContains": ["amp"]
+    },
+    "appBundleIDs": [],
+    "hooks": null
+  },
+  {
+    "id": "qwen-code",
+    "displayName": "Qwen Code",
+    "match": {
+      "executable": ["qwen"],
+      "argvContains": ["qwen"]
+    },
+    "appBundleIDs": [],
+    "hooks": null
+  },
+  {
+    "id": "crush",
+    "displayName": "Crush",
+    "match": {
+      "executable": ["crush"],
+      "argvContains": []
+    },
+    "appBundleIDs": [],
+    "hooks": null
+  },
+  {
+    "id": "copilot-cli",
+    "displayName": "Copilot CLI",
+    "match": {
+      "executable": ["copilot"],
+      "argvContains": ["copilot"]
+    },
+    "appBundleIDs": [],
+    "hooks": null
+  }
+]
