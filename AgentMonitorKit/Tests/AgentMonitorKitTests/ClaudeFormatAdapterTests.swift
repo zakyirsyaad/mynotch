@@ -86,3 +86,36 @@ func runningEvents(name: String) throws {
     #expect(TextTruncation.detail("abc", limit: 0) == "")
     #expect(TextTruncation.detail("abc", limit: 1) == "…")
 }
+
+@Test func antigravityCamelCasePayloadMapsPreInvocationAndStop() throws {
+    let pre = InboxEvent(
+        version: 1,
+        source: "antigravity",
+        event: "",
+        pid: 13628,
+        timestamp: .now,
+        payload: .object([
+            "conversationId": .string("conv-42"),
+            "workspacePaths": .array([.string("/Users/test/projects/mynotch")]),
+            "hookEventName": .string("PreInvocation"),
+            "lastUserInput": .string("secret prompt")
+        ])
+    )
+    let adaptedPre = try #require(ClaudeFormatAdapter.adapt(pre))
+    #expect(adaptedPre.sessionID == "conv-42")
+    #expect(adaptedPre.cwdName == "mynotch")
+    #expect(adaptedPre.kind == .status(.running, detail: nil))
+
+    let stop = InboxEvent(
+        version: 1,
+        source: "antigravity",
+        event: "Stop",
+        pid: 13628,
+        timestamp: .now,
+        payload: .object([
+            "conversationId": .string("conv-42"),
+            "cwd": .string("/Users/test/projects/mynotch")
+        ])
+    )
+    #expect(ClaudeFormatAdapter.adapt(stop)?.kind == .status(.done, detail: nil))
+}

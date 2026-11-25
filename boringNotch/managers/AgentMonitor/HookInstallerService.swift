@@ -42,7 +42,7 @@ final class HookInstallerService: ObservableObject {
                 next[def.id] = false
                 continue
             }
-            next[def.id] = HookConfigMerger.isInstalled(in: json, events: hooks.events)
+            next[def.id] = HookConfigMerger.isInstalled(in: json, events: hooks.events, format: hooks.format)
         }
         installed = next
     }
@@ -61,7 +61,8 @@ final class HookInstallerService: ObservableObject {
             into: original,
             agentID: def.id,
             events: hooks.events,
-            reporterPath: paths.reporter.path
+            reporterPath: paths.reporter.path,
+            format: hooks.format
         )
         try validateAndWrite(updated, to: configURL)
         refresh()
@@ -71,7 +72,7 @@ final class HookInstallerService: ObservableObject {
         guard let hooks = def.hooks else { return }
         let configURL = expandedURL(hooks.config)
         let original = try readAndBackupConfig(at: configURL)
-        let updated = HookConfigMerger.uninstalling(from: original)
+        let updated = HookConfigMerger.uninstalling(from: original, format: hooks.format)
         try validateAndWrite(updated, to: configURL)
         refresh()
     }

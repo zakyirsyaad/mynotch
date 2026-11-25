@@ -133,5 +133,24 @@
     },
     "appBundleIDs": [],
     "hooks": null
+  },
+  {
+    "id": "antigravity",
+    "displayName": "Antigravity",
+    "match": {
+      "executable": ["Antigravity", "agy"],
+      "argvContains": []
+    },
+    "appBundleIDs": ["com.google.antigravity"],
+    "hooks": {
+      "format": "antigravity",
+      "config": "~/.gemini/config/hooks.json",
+      "events": [
+        "SessionStart",
+        "PreInvocation",
+        "PostToolUse",
+        "Stop"
+      ]
+    }
   }
 ]

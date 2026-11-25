@@ -3,19 +3,22 @@ import Foundation
 public enum ClaudeFormatAdapter {
     public static func adapt(_ event: InboxEvent) -> AgentEvent? {
         let rawEventName = event.event.isEmpty
-            ? (event.payload["hook_event_name"]?.stringValue ?? "")
+            ? (event.payload["hook_event_name"]?.stringValue
+                ?? event.payload["hookEventName"]?.stringValue
+                ?? "")
             : event.event
 
         guard let kind = mapKind(eventName: rawEventName, payload: event.payload) else {
             return nil
         }
 
-        let rawSessionID = event.payload["session_id"]?.stringValue
-        let sessionID = (rawSessionID?.isEmpty == false)
-            ? rawSessionID!
-            : "\(event.source)-\(event.pid)"
+        let rawSessionID = nonEmpty(event.payload["session_id"]?.stringValue)
+            ?? nonEmpty(event.payload["conversationId"]?.stringValue)
+        let sessionID = rawSessionID ?? "\(event.source)-\(event.pid)"
 
-        let cwdName = extractCwdName(from: event.payload["cwd"]?.stringValue)
+        let rawCwd = event.payload["cwd"]?.stringValue
+            ?? event.payload["workspacePaths"]?.arrayValue?.first?.stringValue
+        let cwdName = extractCwdName(from: rawCwd)
 
         return AgentEvent(
             sessionID: sessionID,
@@ -29,7 +32,7 @@ public enum ClaudeFormatAdapter {
 
     private static func mapKind(eventName: String, payload: JSONValue) -> AgentEventKind? {
         switch eventName {
-        case "SessionStart", "UserPromptSubmit", "PostToolUse":
+        case "SessionStart", "UserPromptSubmit", "PostToolUse", "PreInvocation":
             return .status(.running, detail: nil)
         case "Notification":
             let detail = cleanedDetail(payload["message"]?.stringValue)

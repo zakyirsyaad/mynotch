@@ -49,3 +49,24 @@ private extension JSONValue {
     #expect(!HookConfigMerger.isInstalled(in: out, events: ["Stop", "SessionStart"]))
     #expect(!HookConfigMerger.isInstalled(in: .object([:]), events: []))
 }
+
+@Test func antigravityInstallPreservesForeignHooksAndUninstallsCleanly() throws {
+    let existing = try decodeJSON(#"{"ecc-session-init":{"SessionStart":[{"type":"command","command":"node init.js"}]}}"#)
+    let events = ["SessionStart", "PreInvocation", "PostToolUse", "Stop"]
+    let installed = HookConfigMerger.installing(
+        into: existing,
+        agentID: "antigravity",
+        events: events,
+        reporterPath: reporterPath,
+        format: "antigravity"
+    )
+    #expect(installed["ecc-session-init"] == existing["ecc-session-init"])
+    #expect(HookConfigMerger.isInstalled(in: installed, events: events, format: "antigravity"))
+    #expect(installed[HookConfigMerger.antigravityHookKey]?["SessionStart"]?.arrayValue?.first?["command"]?.stringValue?.hasSuffix("&& printf '{}'") == true)
+    #expect(installed[HookConfigMerger.antigravityHookKey]?["PostToolUse"]?.arrayValue?.first?["matcher"] == .string("*"))
+    #expect(HookConfigMerger.installing(into: installed, agentID: "antigravity", events: events, reporterPath: reporterPath, format: "antigravity") == installed)
+
+    let uninstalled = HookConfigMerger.uninstalling(from: installed, format: "antigravity")
+    #expect(uninstalled == existing)
+    #expect(!HookConfigMerger.isInstalled(in: uninstalled, events: events, format: "antigravity"))
+}

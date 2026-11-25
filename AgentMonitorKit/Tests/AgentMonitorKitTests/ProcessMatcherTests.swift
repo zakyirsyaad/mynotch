@@ -15,6 +15,8 @@ private func snap(
     let reg = try AgentRegistry.bundled()
     #expect(ProcessMatcher.agentID(for: snap(1, "claude"), in: reg) == "claude-code")
     #expect(ProcessMatcher.agentID(for: snap(2, "codex"), in: reg) == "codex")
+    #expect(ProcessMatcher.agentID(for: snap(3, "Antigravity"), in: reg) == "antigravity")
+    #expect(ProcessMatcher.agentID(for: snap(4, "agy"), in: reg) == "antigravity")
 }
 
 @Test func matchIsCaseSensitive() throws {
