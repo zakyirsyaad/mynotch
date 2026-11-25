@@ -8,9 +8,9 @@ private func decodeJSON(_ text: String) throws -> JSONValue {
     try JSONDecoder().decode(JSONValue.self, from: Data(text.utf8))
 }
 
-private extension Optional where Wrapped == JSONValue {
+private extension JSONValue {
     var arrayCount: Int? {
-        self?.arrayValue?.count
+        arrayValue?.count
     }
 }
 
