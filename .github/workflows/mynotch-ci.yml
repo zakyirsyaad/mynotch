@@ -1,0 +1,72 @@
+name: MyNotch Build & Test
+
+on:
+  push:
+    branches:
+      - mynotch
+  workflow_dispatch:
+    inputs:
+      configuration:
+        description: 'Build configuration'
+        required: false
+        default: Release
+        type: choice
+        options:
+          - Release
+          - Debug
+
+concurrency:
+  group: mynotch-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    name: Build & Test MyNotch
+    runs-on: macos-15
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Show toolchain versions
+        run: |
+          xcodebuild -version
+          swift --version
+
+      - name: Test AgentMonitorKit
+        run: |
+          cd AgentMonitorKit
+          swift test
+
+      - name: Build boringNotch
+        env:
+          CONFIG: ${{ inputs.configuration || 'Release' }}
+        run: |
+          xcodebuild \
+            -project boringNotch.xcodeproj \
+            -scheme boringNotch \
+            -configuration "$CONFIG" \
+            -derivedDataPath build/DerivedData \
+            CODE_SIGN_IDENTITY="-" \
+            CODE_SIGNING_ALLOWED=YES \
+            build
+
+      - name: Package app bundle
+        env:
+          CONFIG: ${{ inputs.configuration || 'Release' }}
+        run: |
+          APP_PATH=$(find "build/DerivedData/Build/Products/${CONFIG}" -maxdepth 1 -name "*.app" -print -quit)
+          if [ -z "$APP_PATH" ]; then
+            echo "Built .app bundle not found in build/DerivedData/Build/Products/${CONFIG}"
+            exit 1
+          fi
+          ditto -c -k --sequesterRsrc --keepParent "$APP_PATH" "build/MyNotch-${CONFIG}.zip"
+
+      - name: Upload MyNotch app artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: MyNotch-${{ inputs.configuration || 'Release' }}
+          path: build/MyNotch-${{ inputs.configuration || 'Release' }}.zip
+          retention-days: 14
