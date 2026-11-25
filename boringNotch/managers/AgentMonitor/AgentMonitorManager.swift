@@ -196,7 +196,7 @@ final class AgentMonitorManager: ObservableObject {
     }
 
     private func currentNoticeContext(forAgentPID pid: Int32) -> NoticeContext {
-        let notchContext = notchContextProvider?() ?? (false, false)
+        let notchContext = notchContextProvider?() ?? (notchOpen: false, hiddenForFullscreen: false)
         let frontmost = NSWorkspace.shared.frontmostApplication?.bundleIdentifier
         let host = resolver.hostApp(forAgentPID: pid)?.bundleIdentifier
         return NoticeContext(
@@ -219,7 +219,7 @@ final class AgentMonitorManager: ObservableObject {
                 self.noticeQueue = remaining
                 guard let notice = nextNotice else { break }
 
-                let notchContext = self.notchContextProvider?() ?? (false, false)
+                let notchContext = self.notchContextProvider?() ?? (notchOpen: false, hiddenForFullscreen: false)
                 if notchContext.notchOpen || notchContext.hiddenForFullscreen {
                     continue
                 }
