@@ -1,0 +1,16 @@
+{
+  "v": 1,
+  "source": "codex",
+  "event": "SessionStart",
+  "pid": 13118,
+  "ts": 1795618795,
+  "payload": {
+    "session_id": "01a21338-61dc-75d0-bbd4-a3475faf96b4",
+    "transcript_path": "<redacted>",
+    "cwd": "/Users/test/projects/capture",
+    "hook_event_name": "SessionStart",
+    "model": "gpt-6.1-sol",
+    "permission_mode": "bypassPermissions",
+    "source": "startup"
+  }
+}

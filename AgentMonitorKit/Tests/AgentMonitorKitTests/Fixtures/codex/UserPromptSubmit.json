@@ -1,0 +1,17 @@
+{
+  "v": 1,
+  "source": "codex",
+  "event": "UserPromptSubmit",
+  "pid": 13118,
+  "ts": 1795618797,
+  "payload": {
+    "session_id": "01a21338-61dc-75d0-bbd4-a3475faf96b4",
+    "turn_id": "01a21338-6a37-7e01-8924-395c43391d22",
+    "transcript_path": "<redacted>",
+    "cwd": "/Users/test/projects/capture",
+    "hook_event_name": "UserPromptSubmit",
+    "model": "gpt-6.1-sol",
+    "permission_mode": "bypassPermissions",
+    "prompt": "<redacted>"
+  }
+}

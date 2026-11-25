@@ -940,7 +940,7 @@ git commit -m "feat(agents): show agent notices in the closed notch"
 
 - [ ] **Step 1: `HookInstallerService`**
 
-`install`: salin `NotchReportScript.url` ke `MyNotchPaths.reporter` dengan izin `0700` (folder `0700`); ekspansi `~` di `hooks.config`; file tidak ada → `configMissing`; buat cadangan `<file>.mynotch-backup-<yyyyMMdd-HHmmss>`; decode ke `JSONValue` (gagal → `invalidJSON`, file tidak disentuh); `HookConfigMerger.installing(… reporterPath: "~/.mynotch/bin/notch-report")`; encode `JSONEncoder` dengan `.prettyPrinted, .withoutEscapingSlashes`; decode ulang hasil encode sebagai validasi; tulis atomik (`Data.write(to:options: .atomic)`). `uninstall` sama tanpa penyalinan skrip. `refresh` mengisi `installed` lewat `isInstalled`.
+`install`: salin `NotchReportScript.url` ke `MyNotchPaths.reporter` dengan izin `0700` (folder `0700`); ekspansi `~` di `hooks.config`; file tidak ada → `configMissing`; buat cadangan `<file>.mynotch-backup-<yyyyMMdd-HHmmss>`; decode ke `JSONValue` (gagal → `invalidJSON`, file tidak disentuh); `HookConfigMerger.installing(… reporterPath: MyNotchPaths().reporter.path)` (path absolut karena Codex 0.172 tidak mengekspansi `~` pada perintah hook, sementara `HookConfigMerger.marker = "/.mynotch/bin/notch-report"` tetap mengenali keduanya); encode `JSONEncoder` dengan `.prettyPrinted, .withoutEscapingSlashes`; decode ulang hasil encode sebagai validasi; tulis atomik (`Data.write(to:options: .atomic)`). `uninstall` sama tanpa penyalinan skrip. `refresh` mengisi `installed` lewat `isInstalled`.
 
 - [ ] **Step 2: `AgentsSettingsView`**
 

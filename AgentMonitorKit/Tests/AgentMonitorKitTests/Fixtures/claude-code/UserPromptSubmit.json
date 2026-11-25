@@ -1,0 +1,14 @@
+{
+  "v": 1,
+  "source": "claude-code",
+  "event": "UserPromptSubmit",
+  "pid": 21001,
+  "ts": 1795619002,
+  "payload": {
+    "session_id": "cc-sess-001",
+    "transcript_path": "<redacted>",
+    "cwd": "/Users/test/projects/capture",
+    "hook_event_name": "UserPromptSubmit",
+    "prompt": "<redacted>"
+  }
+}

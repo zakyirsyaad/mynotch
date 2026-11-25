@@ -309,7 +309,9 @@ Pasang:
 2. Untuk setiap agent ber-hooks yang file konfigurasinya ada, buat cadangan
    `<file>.mynotch-backup-<timestamp>`.
 3. Tambahkan satu grup hook per event yang dibutuhkan, dengan perintah
-   `~/.mynotch/bin/notch-report <id> <Event>` dan `timeout` 5 detik. Grup yang
+   absolut `MyNotchPaths().reporter.path` (misalnya
+   `/Users/<user>/.mynotch/bin/notch-report <id> <Event>`, karena Codex 0.172
+   tidak mengekspansi `~` pada perintah hook) dan `timeout` 5 detik. Grup yang
    perintahnya sudah ada tidak ditambah lagi.
 4. Validasi hasilnya sebagai JSON lalu tulis secara atomik. Bila gagal, file
    asli tidak disentuh dan error ditampilkan di Settings.
@@ -328,8 +330,8 @@ Hooks dan pengaturan lain di file itu, termasuk `notify` di
 di `[hooks.state]`; setelah pemasangan, Codex mungkin meminta persetujuan sekali.
 Settings menampilkan catatan tentang hal ini.
 
-Lepas: hapus hanya grup hook yang perintahnya memanggil
-`~/.mynotch/bin/notch-report`.
+Lepas: hapus hanya grup hook yang perintahnya mengandung marker
+`/.mynotch/bin/notch-report` (mencakup path absolut maupun `~`).
 
 ### 5.10 Integrasi ke kode yang ada
 

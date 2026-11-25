@@ -1,0 +1,14 @@
+{
+  "v": 1,
+  "source": "claude-code",
+  "event": "SessionEnd",
+  "pid": 21001,
+  "ts": 1795619012,
+  "payload": {
+    "session_id": "cc-sess-001",
+    "transcript_path": "<redacted>",
+    "cwd": "/Users/test/projects/capture",
+    "hook_event_name": "SessionEnd",
+    "reason": "logout"
+  }
+}
