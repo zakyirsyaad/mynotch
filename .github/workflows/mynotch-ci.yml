@@ -38,7 +38,13 @@ jobs:
       - name: Test AgentMonitorKit
         run: |
           cd AgentMonitorKit
-          swift test
+          swift test --enable-code-coverage
+          BIN_PATH=$(swift build --show-bin-path)
+          PROFDATA=$(find "$BIN_PATH" -name "default.profdata" | head -n 1)
+          TEST_BIN="$BIN_PATH/AgentMonitorKitPackageTests.xctest/Contents/MacOS/AgentMonitorKitPackageTests"
+          if [ -f "$PROFDATA" ] && [ -f "$TEST_BIN" ]; then
+            xcrun llvm-cov report "$TEST_BIN" -instr-profile "$PROFDATA" -ignore-filename-regex="(\.build/|Tests/)"
+          fi
 
       - name: Build boringNotch
         env:
