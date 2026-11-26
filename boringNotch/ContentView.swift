@@ -6,6 +6,7 @@
 //  Modified by Richard Kunkli on 24/08/2024.
 //
 
+import AppKit
 import AVFoundation
 import Combine
 import Defaults
@@ -29,8 +30,6 @@ struct ContentView: View {
     @State private var anyDropDebounceTask: Task<Void, Never>?
 
     @State private var gestureProgress: CGFloat = .zero
-
-    @State private var haptics: Bool = false
 
     @Namespace var albumArtNamespace
 
@@ -134,6 +133,8 @@ struct ContentView: View {
                         
                         return view
                             .animation(vm.notchState == .open ? openAnimation : closeAnimation, value: vm.notchState)
+                            .animation(animationSpring, value: coordinator.expandingView.show)
+                            .animation(animationSpring, value: coordinator.expandingView.type)
                             .animation(.smooth, value: gestureProgress)
                     }
                     .contentShape(Rectangle())
@@ -190,7 +191,6 @@ struct ContentView: View {
                             }
                         }
                     }
-                    .sensoryFeedback(.alignment, trigger: haptics)
                     .contextMenu {
                         Button("Settings") {
                             DispatchQueue.main.async {
@@ -298,6 +298,11 @@ struct ContentView: View {
                             let notice = coordinator.expandingView.agent
                       {
                           AgentNoticeView(notice: notice)
+                              .id(notice.id)
+                              .transition(.asymmetric(
+                                  insertion: .opacity.combined(with: .scale(scale: 0.92)),
+                                  removal: .opacity
+                              ))
                       } else if coordinator.sneakPeek.show && Defaults[.inlineHUD] && (coordinator.sneakPeek.type != .music) && (coordinator.sneakPeek.type != .battery) && vm.notchState == .closed {
                           InlineHUD(type: $coordinator.sneakPeek.type, value: $coordinator.sneakPeek.value, icon: $coordinator.sneakPeek.icon, hoverAnimation: $isHovering, gestureProgress: $gestureProgress)
                               .transition(.opacity)
@@ -531,6 +536,13 @@ struct ContentView: View {
         }
     }
 
+    // MARK: - Haptics
+
+    private func triggerHaptic() {
+        guard Defaults[.enableHaptics] else { return }
+        NSHapticFeedbackManager.defaultPerformer.perform(.alignment, performanceTime: .now)
+    }
+
     // MARK: - Hover Management
 
     private func handleHover(_ hovering: Bool) {
@@ -538,12 +550,13 @@ struct ContentView: View {
         hoverTask?.cancel()
         
         if hovering {
+            let wasHovering = isHovering
             withAnimation(animationSpring) {
                 isHovering = true
             }
             
-            if vm.notchState == .closed && Defaults[.enableHaptics] {
-                haptics.toggle()
+            if !wasHovering && vm.notchState == .closed {
+                triggerHaptic()
             }
             
             guard vm.notchState == .closed,
@@ -602,9 +615,7 @@ struct ContentView: View {
         }
 
         if translation > Defaults[.gestureSensitivity] {
-            if Defaults[.enableHaptics] {
-                haptics.toggle()
-            }
+            triggerHaptic()
             withAnimation(animationSpring) {
                 gestureProgress = .zero
             }
@@ -634,9 +645,7 @@ struct ContentView: View {
                 vm.close()
             }
 
-            if Defaults[.enableHaptics] {
-                haptics.toggle()
-            }
+            triggerHaptic()
         }
     }
 }

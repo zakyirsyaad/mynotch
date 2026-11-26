@@ -195,6 +195,11 @@ class BoringViewModel: NSObject, ObservableObject {
         
         // Force music information update when notch is opened
         MusicManager.shared.forceUpdate()
+        if Defaults[.agentMonitorEnabled] {
+            Task { @MainActor in
+                AgentMonitorManager.shared.refreshNow()
+            }
+        }
     }
 
     func close() {

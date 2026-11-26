@@ -67,10 +67,10 @@ final class DiscordIntegrationManager: ObservableObject {
         presenceTask?.cancel()
         presenceTask = nil
 
-        clearMusicPresenceAndDisconnect()
+        clearMusicPresenceAndDisconnect(synchronous: true)
 
         unsubscribeVoiceEvents()
-        voiceClient.stop()
+        voiceClient.stopSync()
         voiceState = DiscordVoiceState()
         isAuthenticatedOnCurrentConnection = false
         activeVoiceClientID = ""
@@ -238,21 +238,28 @@ final class DiscordIntegrationManager: ObservableObject {
         }
     }
 
-    private func clearMusicPresenceAndDisconnect() {
-        if musicConnectionState == .connected && didSendActivityOnce && lastSentActivity != nil {
-            musicClient.sendJSON(
-                DiscordIPCFramer.setActivityPayload(
-                    pid: ProcessInfo.processInfo.processIdentifier,
-                    nonce: UUID().uuidString,
-                    activity: nil
-                )
+    private func clearMusicPresenceAndDisconnect(synchronous: Bool = false) {
+        let shouldClear = musicConnectionState == .connected && didSendActivityOnce && lastSentActivity != nil
+        let clearPayload: JSONValue? = shouldClear
+            ? DiscordIPCFramer.setActivityPayload(
+                pid: ProcessInfo.processInfo.processIdentifier,
+                nonce: UUID().uuidString,
+                activity: nil
             )
-        }
+            : nil
+
         lastSentActivity = nil
         didSendActivityOnce = false
         activeMusicClientID = ""
         activePlayerName = nil
-        musicClient.stop()
+        if synchronous {
+            musicClient.stopSync(sendingFinalPayload: clearPayload)
+        } else {
+            if let clearPayload {
+                musicClient.sendJSON(clearPayload)
+            }
+            musicClient.stop()
+        }
         musicConnectionState = .disabled
     }
 

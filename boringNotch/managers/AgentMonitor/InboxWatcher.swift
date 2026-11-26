@@ -39,6 +39,13 @@ final class InboxWatcher {
         }
     }
 
+    func drainNow() {
+        queue.async { [weak self] in
+            guard let self, self.isRunning else { return }
+            self.drainInbox()
+        }
+    }
+
     func stop() {
         queue.sync {
             isRunning = false

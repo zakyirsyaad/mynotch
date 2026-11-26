@@ -82,7 +82,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             screenUnlockedObserver = nil
         }
         MusicManager.shared.destroy()
-        Task { @MainActor in
+        MainActor.assumeIsolated {
             AgentMonitorManager.shared.stop()
             DiscordIntegrationManager.shared.stop()
         }

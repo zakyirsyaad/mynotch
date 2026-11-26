@@ -7,6 +7,7 @@ struct AgentRowView: View {
 
     @ObservedObject private var manager = AgentMonitorManager.shared
     @ObservedObject private var iconProvider = AgentIconProvider.shared
+    @State private var pulse = false
 
     private var titleText: String {
         let name = manager.displayName(for: session.agentID)
@@ -57,9 +58,18 @@ struct AgentRowView: View {
                 Spacer(minLength: 8)
 
                 HStack(spacing: 5) {
-                    Circle()
-                        .fill(session.status.color)
-                        .frame(width: 7, height: 7)
+                    ZStack {
+                        if session.status == .running || session.status == .waiting {
+                            Circle()
+                                .fill(session.status.color.opacity(pulse ? 0.0 : 0.45))
+                                .frame(width: 12, height: 12)
+                                .scaleEffect(pulse ? 1.35 : 0.7)
+                        }
+                        Circle()
+                            .fill(session.status.color)
+                            .frame(width: 7, height: 7)
+                    }
+                    .frame(width: 12, height: 12)
 
                     Text(formatElapsed(since: session.startedAt, now: now))
                         .font(.caption.monospacedDigit())
@@ -75,6 +85,25 @@ struct AgentRowView: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .onAppear {
+            if session.status == .running || session.status == .waiting {
+                withAnimation(.easeInOut(duration: 1.4).repeatForever(autoreverses: false)) {
+                    pulse = true
+                }
+            }
+        }
+        .onChange(of: session.status) { _, newStatus in
+            if newStatus == .running || newStatus == .waiting {
+                pulse = false
+                withAnimation(.easeInOut(duration: 1.4).repeatForever(autoreverses: false)) {
+                    pulse = true
+                }
+            } else {
+                withAnimation(.easeOut(duration: 0.2)) {
+                    pulse = false
+                }
+            }
+        }
     }
 
     @ViewBuilder

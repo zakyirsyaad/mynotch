@@ -11,13 +11,19 @@ struct HoverButton: View {
     var icon: String
     var iconColor: Color = .primary
     var scale: Image.Scale = .medium
+    var compact: Bool = false
     var action: () -> Void
     var contentTransition: ContentTransition = .symbolEffect;
     
     @State private var isHovering = false
 
     var body: some View {
-        let size = CGFloat(scale == .large ? 40 : 30)
+        let size: CGFloat = compact
+            ? (scale == .large ? 30 : 24)
+            : (scale == .large ? 40 : 30)
+        let iconFont: Font = compact
+            ? (scale == .large ? .title3 : .callout)
+            : (scale == .large ? .largeTitle : .body)
         
         Button(action: action) {
             Rectangle()
@@ -32,7 +38,7 @@ struct HoverButton: View {
                             Image(systemName: icon)
                                 .foregroundColor(iconColor)
                                 .contentTransition(contentTransition)
-                                .font(scale == .large ? .largeTitle : .body)
+                                .font(iconFont)
                         }
                 }
         }

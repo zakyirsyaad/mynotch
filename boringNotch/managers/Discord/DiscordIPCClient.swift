@@ -87,6 +87,17 @@ final class DiscordIPCClient {
         }
     }
 
+    func stopSync(sendingFinalPayload payload: JSONValue? = nil, opcode: DiscordIPCOpcode = .frame) {
+        queue.sync {
+            if let payload, self.socketFD >= 0,
+               let data = try? DiscordIPCFramer.encodeJSON(payload, opcode: opcode)
+            {
+                _ = self.writeAll(data, to: self.socketFD)
+            }
+            self.stopLocked(state: .disabled)
+        }
+    }
+
     func sendJSON(_ value: JSONValue, opcode: DiscordIPCOpcode = .frame) {
         queue.async { [weak self] in
             guard let self, self.socketFD >= 0 else { return }

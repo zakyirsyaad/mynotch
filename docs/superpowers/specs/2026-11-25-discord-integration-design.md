@@ -80,20 +80,21 @@ Menu `"Discord"` di `SettingsView`:
 
 ## 4. Arsitektur
 
-Satu koneksi Unix domain socket lokal ke Discord desktop melayani Rich Presence Apple Music dan Voice RPC sekaligus:
+Dua koneksi Unix domain socket lokal terpisah (`musicClient` & `voiceClient`) ke Discord desktop melayani Music Rich Presence (zero-config 12 pemutar bawaan) dan Voice RPC (OAuth2) secara independen:
 
 ```
-MusicManager (Apple Music) ──▶ DiscordMusicPresenceFormatter ──┐
-                                                               ▼
-Discord Desktop (discord-ipc-0..9) ◀═══ DiscordIPCClient ◀═══ DiscordIntegrationManager
-   │  (events: VOICE_CHANNEL_SELECT,     ▲ (OAuth token)            │
-   │   VOICE_SETTINGS_UPDATE, SPEAKING)  └── DiscordOAuthService    ▼
-   └────────────────────────────────────▶ DiscordVoiceState ──▶ Notch Voice UI
+MusicManager (12 players) ──▶ DiscordMediaPlayerRegistry ──▶ DiscordMusicPresenceFormatter ──┐
+                                                                                             ▼
+Discord Desktop (discord-ipc-0..9) ◀═══ musicClient + voiceClient ◀═══ DiscordIntegrationManager
+   │  (events: VOICE_CHANNEL_SELECT,      ▲ (OAuth token)                    │
+   │   VOICE_SETTINGS_UPDATE, SPEAKING)   └── DiscordOAuthService            ▼
+   └─────────────────────────────────────▶ DiscordVoiceState ──▶ Notch Voice UI
 ```
 
 1. **Lapis murni di `AgentMonitorKit/Sources/AgentMonitorKit/Discord/`** (diuji via `swift test`, target cakupan ≥ 80%):
-   - `DiscordIPCFramer.swift`: framing biner 8-byte little-endian (`opcode` + `length` + JSON UTF-8) dan builder payload RPC (`HANDSHAKE`, `AUTHORIZE`, `AUTHENTICATE`, `SET_ACTIVITY`, `SUBSCRIBE`, `GET_SELECTED_VOICE_CHANNEL`, `GET_VOICE_SETTINGS`, `SET_VOICE_SETTINGS`, `SELECT_VOICE_CHANNEL`).
-   - `DiscordMusicPresenceFormatter.swift`: konversi `DiscordMusicTrack` (Apple Music `type: 2` Listening) → `DiscordPresenceActivity?` dengan perhitungan timestamp `start`/`end`.
+   - `DiscordIPCFramer.swift`: framing biner 8-byte little-endian (`opcode` + `length` + JSON UTF-8) dan builder payload RPC (`HANDSHAKE`, `AUTHORIZE`, `AUTHENTICATE`, `SET_ACTIVITY`, `SUBSCRIBE`, `UNSUBSCRIBE`, `GET_SELECTED_VOICE_CHANNEL`, `GET_VOICE_SETTINGS`, `SET_VOICE_SETTINGS`, `SELECT_VOICE_CHANNEL`).
+   - `DiscordMediaPlayerRegistry.swift`: registry 12 pemutar bawaan (Apple Music, Spotify, YouTube Music, TIDAL, Deezer, Cider, Apple Podcasts, Amazon Music, VLC, IINA, VOX, Swinsian) beserta Application ID & badge ikon player.
+   - `DiscordMusicPresenceFormatter.swift`: konversi `DiscordMusicTrack` (`type: 2` Listening) → `DiscordPresenceActivity?` dengan perhitungan timestamp `start`/`end`, badge logo player (`small_image`), tombol link lagu, dan `status_display_type` (default artist).
    - `DiscordVoiceState.swift`: model immutable `DiscordVoiceState` + reducer murni yang mem-parsing JSON response/dispatch RPC dari Discord (`READY`, `GET_SELECTED_VOICE_CHANNEL`, `VOICE_CHANNEL_SELECT`, `GET_VOICE_SETTINGS`, `VOICE_SETTINGS_UPDATE`, `SPEAKING_START`, `SPEAKING_STOP`).
 2. **Lapis app di `boringNotch/managers/Discord/` & `boringNotch/components/Discord/`**:
    - `KeychainSecretStore.swift`: pembungkus `Security.framework` untuk `discord-client-secret`, `discord-access-token`, dan `discord-refresh-token`.

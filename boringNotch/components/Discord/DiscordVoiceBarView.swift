@@ -30,50 +30,48 @@ struct DiscordVoiceBarView: View {
     }
 
     var body: some View {
-        HStack(spacing: 10) {
+        HStack(spacing: 8) {
             Button {
                 discordManager.openDiscordApp()
             } label: {
-                HStack(spacing: 8) {
+                HStack(spacing: 6) {
                     Image(systemName: voiceState.isDeafened ? "speaker.slash.fill" : (effectiveMuted ? "mic.slash.fill" : "mic.fill"))
-                        .font(.system(size: 13, weight: .semibold))
+                        .font(.system(size: 11, weight: .semibold))
                         .foregroundStyle(statusColor)
-                        .frame(width: 22, height: 22)
+                        .frame(width: 18, height: 18)
 
-                    VStack(alignment: .leading, spacing: 1) {
-                        Text(voiceState.channelName ?? "Discord Voice")
-                            .font(.subheadline.weight(.medium))
-                            .foregroundStyle(.white)
-                            .lineLimit(1)
-                            .truncationMode(.tail)
+                    Text(voiceState.channelName ?? "Discord Voice")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.white)
+                        .lineLimit(1)
+                        .truncationMode(.tail)
 
-                        HStack(spacing: 5) {
-                            Circle()
-                                .fill(statusColor)
-                                .frame(width: 7, height: 7)
-                            Text(statusText)
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                                .lineLimit(1)
-                        }
-                    }
+                    Circle()
+                        .fill(statusColor)
+                        .frame(width: 6, height: 6)
+
+                    Text(statusText)
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                        .truncationMode(.tail)
                 }
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
 
-            Spacer(minLength: 8)
+            Spacer(minLength: 6)
 
-            HStack(spacing: 6) {
+            HStack(spacing: 5) {
                 Button {
                     discordManager.toggleMute()
                 } label: {
                     Circle()
                         .fill(effectiveMuted ? Color.red.opacity(0.25) : Color.white.opacity(0.10))
-                        .frame(width: 30, height: 30)
+                        .frame(width: 24, height: 24)
                         .overlay {
                             Image(systemName: effectiveMuted ? "mic.slash.fill" : "mic.fill")
-                                .font(.system(size: 12, weight: .semibold))
+                                .font(.system(size: 10.5, weight: .semibold))
                                 .foregroundStyle(effectiveMuted ? Color.red : Color.white)
                         }
                 }
@@ -85,10 +83,10 @@ struct DiscordVoiceBarView: View {
                 } label: {
                     Circle()
                         .fill(voiceState.isDeafened ? Color.red.opacity(0.25) : Color.white.opacity(0.10))
-                        .frame(width: 30, height: 30)
+                        .frame(width: 24, height: 24)
                         .overlay {
                             Image(systemName: voiceState.isDeafened ? "speaker.slash.fill" : "headphones")
-                                .font(.system(size: 12, weight: .semibold))
+                                .font(.system(size: 10.5, weight: .semibold))
                                 .foregroundStyle(voiceState.isDeafened ? Color.red : Color.white)
                         }
                 }
@@ -100,10 +98,10 @@ struct DiscordVoiceBarView: View {
                 } label: {
                     Circle()
                         .fill(Color.red)
-                        .frame(width: 30, height: 30)
+                        .frame(width: 24, height: 24)
                         .overlay {
                             Image(systemName: "phone.down.fill")
-                                .font(.system(size: 12, weight: .semibold))
+                                .font(.system(size: 10.5, weight: .semibold))
                                 .foregroundStyle(.white)
                         }
                 }
@@ -111,10 +109,10 @@ struct DiscordVoiceBarView: View {
                 .help("Leave Voice")
             }
         }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 6)
+        .padding(.horizontal, 9)
+        .padding(.vertical, 4)
         .background(
-            RoundedRectangle(cornerRadius: 10, style: .continuous)
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
                 .fill(Color.white.opacity(0.06))
         )
     }

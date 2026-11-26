@@ -15,11 +15,13 @@ import SwiftUI
 struct MusicPlayerView: View {
     @EnvironmentObject var vm: BoringViewModel
     let albumArtNamespace: Namespace.ID
+    var isCompact: Bool = false
 
     var body: some View {
         HStack {
-            AlbumArtView(vm: vm, albumArtNamespace: albumArtNamespace).padding(.all, 5)
-            MusicControlsView().drawingGroup().compositingGroup()
+            AlbumArtView(vm: vm, albumArtNamespace: albumArtNamespace)
+                .padding(.all, isCompact ? 2 : 5)
+            MusicControlsView(isCompact: isCompact).drawingGroup().compositingGroup()
         }
     }
 }
@@ -111,8 +113,9 @@ struct AlbumArtView: View {
 
 struct MusicControlsView: View {
     @ObservedObject var musicManager = MusicManager.shared
-        @EnvironmentObject var vm: BoringViewModel
-        @ObservedObject var webcamManager = WebcamManager.shared
+    @EnvironmentObject var vm: BoringViewModel
+    @ObservedObject var webcamManager = WebcamManager.shared
+    var isCompact: Bool = false
     @State private var sliderValue: Double = 0
     @State private var dragging: Bool = false
     @State private var lastDragged: Date = .distantPast
@@ -120,21 +123,23 @@ struct MusicControlsView: View {
     @Default(.musicControlSlotLimit) private var slotLimit
 
     var body: some View {
-        VStack(alignment: .leading) {
+        VStack(alignment: .leading, spacing: isCompact ? 2 : 6) {
             songInfoAndSlider
             slotToolbar
+                .layoutPriority(1)
         }
         .buttonStyle(PlainButtonStyle())
     }
 
     private var songInfoAndSlider: some View {
         GeometryReader { geo in
-            VStack(alignment: .leading, spacing: 4) {
+            VStack(alignment: .leading, spacing: isCompact ? 2 : 4) {
                 songInfo(width: geo.size.width)
                 musicSlider
             }
         }
-        .padding(.top, 10)
+        .clipped()
+        .padding(.top, isCompact ? 2 : 10)
         .padding(.leading, 5)
     }
 
@@ -201,12 +206,13 @@ struct MusicControlsView: View {
                 timestampDate: musicManager.timestampDate,
                 elapsedTime: musicManager.elapsedTime,
                 playbackRate: musicManager.playbackRate,
-                isPlaying: musicManager.isPlaying
+                isPlaying: musicManager.isPlaying,
+                isCompact: isCompact
             ) { newValue in
                 MusicManager.shared.seek(to: newValue)
             }
-            .padding(.top, 5)
-            .frame(height: 36)
+            .padding(.top, isCompact ? 0 : 5)
+            .frame(height: isCompact ? 24 : 36)
         }
     }
 
@@ -241,35 +247,35 @@ struct MusicControlsView: View {
     private func slotView(for slot: MusicControlButton) -> some View {
         switch slot {
         case .shuffle:
-            HoverButton(icon: "shuffle", iconColor: musicManager.isShuffled ? .red : .primary, scale: .medium) {
+            HoverButton(icon: "shuffle", iconColor: musicManager.isShuffled ? .red : .primary, scale: .medium, compact: isCompact) {
                 MusicManager.shared.toggleShuffle()
             }
         case .previous:
-            HoverButton(icon: "backward.fill", scale: .medium) {
+            HoverButton(icon: "backward.fill", scale: .medium, compact: isCompact) {
                 MusicManager.shared.previousTrack()
             }
         case .playPause:
-            HoverButton(icon: musicManager.isPlaying ? "pause.fill" : "play.fill", scale: .large) {
+            HoverButton(icon: musicManager.isPlaying ? "pause.fill" : "play.fill", scale: .large, compact: isCompact) {
                 MusicManager.shared.togglePlay()
             }
         case .next:
-            HoverButton(icon: "forward.fill", scale: .medium) {
+            HoverButton(icon: "forward.fill", scale: .medium, compact: isCompact) {
                 MusicManager.shared.nextTrack()
             }
         case .repeatMode:
-            HoverButton(icon: repeatIcon, iconColor: repeatIconColor, scale: .medium) {
+            HoverButton(icon: repeatIcon, iconColor: repeatIconColor, scale: .medium, compact: isCompact) {
                 MusicManager.shared.toggleRepeat()
             }
         case .volume:
             VolumeControlView()
         case .favorite:
-            FavoriteControlButton()
+            FavoriteControlButton(compact: isCompact)
         case .goBackward:
-            HoverButton(icon: "gobackward.15", scale: .medium) {
+            HoverButton(icon: "gobackward.15", scale: .medium, compact: isCompact) {
                 MusicManager.shared.skip(seconds: -15)
             }
         case .goForward:
-            HoverButton(icon: "goforward.15", scale: .medium) {
+            HoverButton(icon: "goforward.15", scale: .medium, compact: isCompact) {
                 MusicManager.shared.skip(seconds: 15)
             }
         case .none:
@@ -300,9 +306,10 @@ struct MusicControlsView: View {
 
 struct FavoriteControlButton: View {
     @ObservedObject var musicManager = MusicManager.shared
+    var compact: Bool = false
 
     var body: some View {
-        HoverButton(icon: iconName, iconColor: iconColor, scale: .medium) {
+        HoverButton(icon: iconName, iconColor: iconColor, scale: .medium, compact: compact) {
             MusicManager.shared.toggleFavoriteTrack()
         }
         .disabled(!musicManager.canFavoriteTrack)
@@ -440,14 +447,18 @@ struct NotchHomeView: View {
         Defaults[.showMirror] && webcamManager.cameraAvailable && vm.isCameraExpanded
     }
 
+    private var isDiscordVoiceActive: Bool {
+        Defaults[.discordVoiceEnabled] && discordManager.voiceState.isInVoice
+    }
+
     private var mainContent: some View {
-        VStack(spacing: 6) {
-            if Defaults[.discordVoiceEnabled] && discordManager.voiceState.isInVoice {
+        VStack(spacing: isDiscordVoiceActive ? 4 : 6) {
+            if isDiscordVoiceActive {
                 DiscordVoiceBarView()
             }
 
             HStack(alignment: .top, spacing: (shouldShowCamera && Defaults[.showCalendar]) ? 10 : 15) {
-                MusicPlayerView(albumArtNamespace: albumArtNamespace)
+                MusicPlayerView(albumArtNamespace: albumArtNamespace, isCompact: isDiscordVoiceActive)
 
                 if Defaults[.showCalendar] {
                     CalendarView()
@@ -484,11 +495,12 @@ struct MusicSliderView: View {
     let elapsedTime: Double
     let playbackRate: Double
     let isPlaying: Bool
+    var isCompact: Bool = false
     var onValueChange: (Double) -> Void
 
 
     var body: some View {
-        VStack {
+        VStack(spacing: isCompact ? 1 : 4) {
             CustomSlider(
                 value: $sliderValue,
                 range: 0...duration,

@@ -44,6 +44,7 @@ final class AgentMonitorManager: ObservableObject {
 
         scanTask = Task { [weak self] in
             while !Task.isCancelled {
+                self?.watcher?.drainNow()
                 let scanned = await Task.detached(priority: .utility) {
                     ProcessScanner.snapshotAll()
                 }.value
@@ -51,6 +52,17 @@ final class AgentMonitorManager: ObservableObject {
                 self?.applyScannedSnapshots(scanned)
                 try? await Task.sleep(for: .seconds(5))
             }
+        }
+    }
+
+    func refreshNow() {
+        guard isRunning else { return }
+        watcher?.drainNow()
+        Task { [weak self] in
+            let scanned = await Task.detached(priority: .utility) {
+                ProcessScanner.snapshotAll()
+            }.value
+            self?.applyScannedSnapshots(scanned)
         }
     }
 
@@ -125,12 +137,23 @@ final class AgentMonitorManager: ObservableObject {
                 continue
             }
 
-            let resolvedPID = ProcessMatcher.resolveAgentPID(
+            var resolvedPID = ProcessMatcher.resolveAgentPID(
                 from: agentEvent.pid,
                 agentID: agentEvent.agentID,
                 lookup: ProcessScanner.snapshot,
                 in: registry
             )
+            if !ProcessScanner.isAlive(resolvedPID) {
+                if let existingPID = state.sessions[agentEvent.sessionID]?.pid,
+                   ProcessScanner.isAlive(existingPID)
+                {
+                    resolvedPID = existingPID
+                } else if let matchingProcess = state.sessions.values.first(where: {
+                    $0.agentID == agentEvent.agentID && ProcessScanner.isAlive($0.pid)
+                }) {
+                    resolvedPID = matchingProcess.pid
+                }
+            }
             if resolvedPID != agentEvent.pid {
                 agentEvent = AgentEvent(
                     sessionID: agentEvent.sessionID,
