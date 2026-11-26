@@ -45,6 +45,7 @@ struct DiscordVoiceBarView: View {
                         .foregroundStyle(.white)
                         .lineLimit(1)
                         .truncationMode(.tail)
+                        .layoutPriority(1)
 
                     Circle()
                         .fill(statusColor)
@@ -54,7 +55,7 @@ struct DiscordVoiceBarView: View {
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
-                        .truncationMode(.tail)
+                        .fixedSize(horizontal: true, vertical: false)
                 }
                 .contentShape(Rectangle())
             }
@@ -77,6 +78,7 @@ struct DiscordVoiceBarView: View {
                 }
                 .buttonStyle(.plain)
                 .help(effectiveMuted ? "Unmute" : "Mute")
+                .accessibilityLabel(effectiveMuted ? "Unmute" : "Mute")
 
                 Button {
                     discordManager.toggleDeafen()
@@ -92,6 +94,7 @@ struct DiscordVoiceBarView: View {
                 }
                 .buttonStyle(.plain)
                 .help(voiceState.isDeafened ? "Undeafen" : "Deafen")
+                .accessibilityLabel(voiceState.isDeafened ? "Undeafen" : "Deafen")
 
                 Button {
                     discordManager.leaveVoiceChannel()
@@ -107,6 +110,7 @@ struct DiscordVoiceBarView: View {
                 }
                 .buttonStyle(.plain)
                 .help("Leave Voice")
+                .accessibilityLabel("Leave Voice")
             }
         }
         .padding(.horizontal, 9)

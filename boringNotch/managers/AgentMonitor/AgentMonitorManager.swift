@@ -22,6 +22,7 @@ final class AgentMonitorManager: ObservableObject {
     private var isRunning = false
     private var watcher: InboxWatcher?
     private var scanTask: Task<Void, Never>?
+    private var refreshTask: Task<Void, Never>?
     private var noticeDrainTask: Task<Void, Never>?
     private var cancellables: Set<AnyCancellable> = []
 
@@ -58,10 +59,12 @@ final class AgentMonitorManager: ObservableObject {
     func refreshNow() {
         guard isRunning else { return }
         watcher?.drainNow()
-        Task { [weak self] in
+        refreshTask?.cancel()
+        refreshTask = Task { [weak self] in
             let scanned = await Task.detached(priority: .utility) {
                 ProcessScanner.snapshotAll()
             }.value
+            guard !Task.isCancelled else { return }
             self?.applyScannedSnapshots(scanned)
         }
     }
@@ -72,6 +75,8 @@ final class AgentMonitorManager: ObservableObject {
         watcher = nil
         scanTask?.cancel()
         scanTask = nil
+        refreshTask?.cancel()
+        refreshTask = nil
         noticeDrainTask?.cancel()
         noticeDrainTask = nil
         noticeQueue = NoticeQueue()
@@ -148,10 +153,15 @@ final class AgentMonitorManager: ObservableObject {
                    ProcessScanner.isAlive(existingPID)
                 {
                     resolvedPID = existingPID
-                } else if let matchingProcess = state.sessions.values.first(where: {
-                    $0.agentID == agentEvent.agentID && ProcessScanner.isAlive($0.pid)
-                }) {
-                    resolvedPID = matchingProcess.pid
+                } else {
+                    let unclaimedCandidates = state.sessions.values.filter {
+                        $0.origin == .process
+                            && $0.agentID == agentEvent.agentID
+                            && ProcessScanner.isAlive($0.pid)
+                    }
+                    if unclaimedCandidates.count == 1, let candidate = unclaimedCandidates.first {
+                        resolvedPID = candidate.pid
+                    }
                 }
             }
             if resolvedPID != agentEvent.pid {

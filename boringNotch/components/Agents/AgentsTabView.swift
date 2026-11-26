@@ -3,6 +3,7 @@ import SwiftUI
 
 struct AgentsTabView: View {
     @ObservedObject private var manager = AgentMonitorManager.shared
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         TimelineView(.periodic(from: .now, by: 10)) { context in
@@ -29,12 +30,14 @@ struct AgentsTabView: View {
                             ForEach(manager.sessions) { session in
                                 AgentRowView(session: session, now: context.date)
                                     .transition(
-                                        .asymmetric(
-                                            insertion: .move(edge: .top)
-                                                .combined(with: .opacity)
-                                                .combined(with: .scale(scale: 0.96)),
-                                            removal: .opacity.combined(with: .scale(scale: 0.96))
-                                        )
+                                        reduceMotion
+                                            ? .opacity
+                                            : .asymmetric(
+                                                insertion: .move(edge: .top)
+                                                    .combined(with: .opacity)
+                                                    .combined(with: .scale(scale: 0.96)),
+                                                removal: .opacity.combined(with: .scale(scale: 0.96))
+                                            )
                                     )
                             }
                         }
@@ -46,7 +49,7 @@ struct AgentsTabView: View {
                 .transition(.opacity)
             }
         }
-        .animation(.spring(response: 0.38, dampingFraction: 0.82), value: manager.sessions)
+        .animation(reduceMotion ? nil : .spring(response: 0.38, dampingFraction: 0.82), value: manager.sessions)
         .onAppear {
             manager.refreshNow()
         }

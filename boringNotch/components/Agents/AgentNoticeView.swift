@@ -6,8 +6,8 @@ struct AgentNoticeView: View {
 
     @EnvironmentObject var vm: BoringViewModel
     @ObservedObject private var iconProvider = AgentIconProvider.shared
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var appeared = false
-    @State private var pulse = false
 
     private var innerWidth: CGFloat {
         max(320, agentNoticeWidth - (cornerRadiusInsets.closed.bottom * 2))
@@ -26,26 +26,17 @@ struct AgentNoticeView: View {
                     .truncationMode(.middle)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
-            .offset(x: appeared ? 0 : -10)
-            .opacity(appeared ? 1 : 0)
+            .offset(x: (appeared || reduceMotion) ? 0 : -10)
+            .opacity((appeared || reduceMotion) ? 1 : 0)
 
             Rectangle()
                 .fill(.black)
                 .frame(width: vm.closedNotchSize.width + 10)
 
             HStack(spacing: 5) {
-                ZStack {
-                    if notice.status == .waiting || notice.status == .error {
-                        Circle()
-                            .fill(notice.status.color.opacity(pulse ? 0.0 : 0.45))
-                            .frame(width: 13, height: 13)
-                            .scaleEffect(pulse ? 1.35 : 0.7)
-                    }
-                    Circle()
-                        .fill(notice.status.color)
-                        .frame(width: 7, height: 7)
-                }
-                .frame(width: 13, height: 13)
+                Circle()
+                    .fill(notice.status.color)
+                    .frame(width: 7, height: 7)
 
                 Text(notice.status.label)
                     .font(.subheadline)
@@ -53,17 +44,16 @@ struct AgentNoticeView: View {
                     .lineLimit(1)
             }
             .frame(maxWidth: .infinity, alignment: .trailing)
-            .offset(x: appeared ? 0 : 10)
-            .opacity(appeared ? 1 : 0)
+            .offset(x: (appeared || reduceMotion) ? 0 : 10)
+            .opacity((appeared || reduceMotion) ? 1 : 0)
         }
         .frame(width: innerWidth, height: vm.effectiveClosedNotchHeight, alignment: .center)
         .onAppear {
-            withAnimation(.spring(response: 0.36, dampingFraction: 0.78)) {
+            if reduceMotion {
                 appeared = true
-            }
-            if notice.status == .waiting || notice.status == .error {
-                withAnimation(.easeInOut(duration: 1.1).repeatForever(autoreverses: false)) {
-                    pulse = true
+            } else {
+                withAnimation(.spring(response: 0.36, dampingFraction: 0.78)) {
+                    appeared = true
                 }
             }
         }

@@ -36,6 +36,12 @@ fi
 
 resolve_agent_pid() {
     pid="$1"
+    case "$pid" in
+        ""|*[!0-9]*)
+            printf '0'
+            return
+            ;;
+    esac
     depth=0
     while [ "$depth" -lt 4 ] && [ "$pid" -gt 1 ]; do
         comm=$(ps -o comm= -p "$pid" 2>/dev/null | awk -F/ '{print $NF}' | tr -d ' \t\r\n')
