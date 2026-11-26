@@ -68,6 +68,7 @@ jobs:
             echo "Built .app bundle not found in build/DerivedData/Build/Products/${CONFIG}"
             exit 1
           fi
+          codesign --force --deep --sign - "$APP_PATH"
           ditto -c -k --sequesterRsrc --keepParent "$APP_PATH" "build/MyNotch-${CONFIG}.zip"
 
       - name: Upload MyNotch app artifact

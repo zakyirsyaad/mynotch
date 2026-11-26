@@ -1,5 +1,40 @@
 import Foundation
 
+public enum DiscordStatusDisplayType: Int, Sendable, Equatable, CaseIterable, Codable {
+    case playerName = 0
+    case artist = 1
+    case trackTitle = 2
+}
+
+public struct DiscordPresenceButton: Sendable, Equatable {
+    public let label: String
+    public let url: String
+
+    public init(label: String, url: String) {
+        self.label = label
+        self.url = url
+    }
+}
+
+public struct DiscordMusicPresenceOptions: Sendable, Equatable {
+    public let statusDisplayType: DiscordStatusDisplayType
+    public let showAlbumName: Bool
+    public let showPlaybackDuration: Bool
+    public let showSongLinkButton: Bool
+
+    public init(
+        statusDisplayType: DiscordStatusDisplayType = .playerName,
+        showAlbumName: Bool = true,
+        showPlaybackDuration: Bool = true,
+        showSongLinkButton: Bool = true
+    ) {
+        self.statusDisplayType = statusDisplayType
+        self.showAlbumName = showAlbumName
+        self.showPlaybackDuration = showPlaybackDuration
+        self.showSongLinkButton = showSongLinkButton
+    }
+}
+
 public struct DiscordMusicTrack: Sendable, Equatable {
     public let title: String
     public let artist: String
@@ -11,6 +46,7 @@ public struct DiscordMusicTrack: Sendable, Equatable {
     public let isPlaying: Bool
     public let bundleIdentifier: String?
     public let artworkURL: String?
+    public let trackURL: String?
 
     public init(
         title: String,
@@ -22,7 +58,8 @@ public struct DiscordMusicTrack: Sendable, Equatable {
         playbackRate: Double = 1.0,
         isPlaying: Bool,
         bundleIdentifier: String?,
-        artworkURL: String? = nil
+        artworkURL: String? = nil,
+        trackURL: String? = nil
     ) {
         self.title = title
         self.artist = artist
@@ -34,6 +71,7 @@ public struct DiscordMusicTrack: Sendable, Equatable {
         self.isPlaying = isPlaying
         self.bundleIdentifier = bundleIdentifier
         self.artworkURL = artworkURL
+        self.trackURL = trackURL
     }
 }
 
@@ -45,6 +83,8 @@ public struct DiscordPresenceActivity: Sendable, Equatable {
     public let endTimestamp: Int?
     public let largeImage: String?
     public let largeText: String?
+    public let statusDisplayType: DiscordStatusDisplayType?
+    public let buttons: [DiscordPresenceButton]
 
     public init(
         type: Int,
@@ -53,7 +93,9 @@ public struct DiscordPresenceActivity: Sendable, Equatable {
         startTimestamp: Int? = nil,
         endTimestamp: Int? = nil,
         largeImage: String? = nil,
-        largeText: String? = nil
+        largeText: String? = nil,
+        statusDisplayType: DiscordStatusDisplayType? = nil,
+        buttons: [DiscordPresenceButton] = []
     ) {
         self.type = type
         self.details = details
@@ -62,6 +104,8 @@ public struct DiscordPresenceActivity: Sendable, Equatable {
         self.endTimestamp = endTimestamp
         self.largeImage = largeImage
         self.largeText = largeText
+        self.statusDisplayType = statusDisplayType
+        self.buttons = buttons
     }
 
     public func toJSONValue() -> JSONValue {
@@ -72,6 +116,10 @@ public struct DiscordPresenceActivity: Sendable, Equatable {
 
         if !state.isEmpty {
             obj["state"] = .string(state)
+        }
+
+        if let statusDisplayType {
+            obj["status_display_type"] = .number(Double(statusDisplayType.rawValue))
         }
 
         var timestamps: [String: JSONValue] = [:]
@@ -96,6 +144,17 @@ public struct DiscordPresenceActivity: Sendable, Equatable {
             obj["assets"] = .object(assets)
         }
 
+        if !buttons.isEmpty {
+            obj["buttons"] = .array(
+                buttons.prefix(2).map { button in
+                    .object([
+                        "label": .string(button.label),
+                        "url": .string(button.url)
+                    ])
+                }
+            )
+        }
+
         return .object(obj)
     }
 }
@@ -106,12 +165,17 @@ public enum DiscordMusicPresenceFormatter {
     public static func activity(
         from track: DiscordMusicTrack?,
         enabled: Bool,
+        customApplicationID: String? = nil,
+        options: DiscordMusicPresenceOptions = DiscordMusicPresenceOptions(),
         now: Date = Date()
     ) -> DiscordPresenceActivity? {
         guard enabled,
               let track,
               track.isPlaying,
-              track.bundleIdentifier == appleMusicBundleID
+              DiscordMediaPlayerRegistry.resolve(
+                  bundleIdentifier: track.bundleIdentifier,
+                  customApplicationID: customApplicationID
+              ) != nil
         else {
             return nil
         }
@@ -120,7 +184,7 @@ public enum DiscordMusicPresenceFormatter {
         guard !title.isEmpty else { return nil }
 
         let artist = clampDiscordText(track.artist)
-        let album = clampDiscordText(track.album)
+        let album = options.showAlbumName ? clampDiscordText(track.album) : ""
 
         let rate = track.playbackRate > 0 ? track.playbackRate : 1.0
         let delta = max(0, now.timeIntervalSince(track.timestampDate)) * rate
@@ -128,7 +192,7 @@ public enum DiscordMusicPresenceFormatter {
 
         let startTimestamp: Int?
         let endTimestamp: Int?
-        if track.duration > 0 {
+        if options.showPlaybackDuration && track.duration > 0 {
             let clampedElapsed = min(currentElapsed, track.duration)
             let start = now.timeIntervalSince1970 - clampedElapsed
             let end = start + track.duration
@@ -139,6 +203,14 @@ public enum DiscordMusicPresenceFormatter {
             endTimestamp = nil
         }
 
+        var buttons: [DiscordPresenceButton] = []
+        if options.showSongLinkButton,
+           let url = track.trackURL?.trimmingCharacters(in: .whitespacesAndNewlines),
+           url.hasPrefix("https://")
+        {
+            buttons.append(DiscordPresenceButton(label: "Listen to this song", url: url))
+        }
+
         return DiscordPresenceActivity(
             type: 2,
             details: title,
@@ -146,7 +218,9 @@ public enum DiscordMusicPresenceFormatter {
             startTimestamp: startTimestamp,
             endTimestamp: endTimestamp,
             largeImage: track.artworkURL,
-            largeText: album.isEmpty ? nil : album
+            largeText: album.isEmpty ? nil : album,
+            statusDisplayType: options.statusDisplayType,
+            buttons: buttons
         )
     }
 

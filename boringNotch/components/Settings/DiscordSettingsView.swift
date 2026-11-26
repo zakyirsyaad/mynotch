@@ -3,7 +3,10 @@ import SwiftUI
 
 struct DiscordSettingsView: View {
     @Default(.discordApplicationID) private var applicationID
-    @Default(.discordAppleMusicPresenceEnabled) private var appleMusicPresenceEnabled
+    @Default(.discordAppleMusicPresenceEnabled) private var musicPresenceEnabled
+    @Default(.discordMusicStatusDisplayType) private var statusDisplayType
+    @Default(.discordMusicShowAlbumName) private var showAlbumName
+    @Default(.discordMusicShowSongLink) private var showSongLink
     @Default(.discordVoiceEnabled) private var voiceEnabled
 
     @ObservedObject private var discordManager = DiscordIntegrationManager.shared
@@ -15,6 +18,46 @@ struct DiscordSettingsView: View {
     var body: some View {
         Form {
             Section {
+                Defaults.Toggle(key: .discordAppleMusicPresenceEnabled) {
+                    Text("Tampilkan lagu yang diputar di profil")
+                }
+
+                HStack {
+                    Text("Status Music Presence")
+                    Spacer()
+                    Text(musicStatusLabel)
+                        .foregroundStyle(musicStatusColor)
+                }
+
+                Picker("Teks di daftar member", selection: $statusDisplayType) {
+                    Text("Nama Player (mis. Apple Music)").tag(0)
+                    Text("Nama Artis").tag(1)
+                    Text("Judul Lagu").tag(2)
+                }
+                .disabled(!musicPresenceEnabled)
+
+                Defaults.Toggle(key: .discordMusicShowAlbumName) {
+                    Text("Tampilkan nama album")
+                }
+                .disabled(!musicPresenceEnabled)
+
+                Defaults.Toggle(key: .discordMusicShowSongLink) {
+                    Text("Tampilkan tombol link lagu")
+                }
+                .disabled(!musicPresenceEnabled)
+
+                Text("Otomatis mendukung Apple Music, Spotify, YouTube Music, TIDAL, Deezer, Cider, VLC, dan lainnya tanpa perlu membuat Application ID. Matikan aplikasi Music Presence terpisah agar tidak bentrok.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            } header: {
+                Text("Music Rich Presence")
+            }
+
+            Section {
+                Defaults.Toggle(key: .discordVoiceEnabled) {
+                    Text("Tampilkan status voice di notch")
+                }
+
                 TextField("Discord Application ID", text: $applicationID)
                     .textFieldStyle(.roundedBorder)
 
@@ -39,40 +82,17 @@ struct DiscordSettingsView: View {
                     }
                 }
 
-                HStack {
-                    Text("Status IPC")
-                    Spacer()
-                    Text(discordManager.connectionState.label)
-                        .foregroundStyle(statusColor)
-                }
-
                 if let secretFeedback {
                     Text(secretFeedback)
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
 
-                Text("Di Discord Developer Portal → OAuth2, tambahkan Redirect URI: http://127.0.0.1")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            } header: {
-                Text("Aplikasi Discord")
-            }
-
-            Section {
-                Defaults.Toggle(key: .discordAppleMusicPresenceEnabled) {
-                    Text("Tampilkan lagu Apple Music di profil")
-                }
-                Text("Mengirim aktivitas Listening saat Apple Music memutar lagu. Hanya membutuhkan Application ID.")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            } header: {
-                Text("Rich Presence")
-            }
-
-            Section {
-                Defaults.Toggle(key: .discordVoiceEnabled) {
-                    Text("Tampilkan status voice di notch")
+                HStack {
+                    Text("Status Voice IPC")
+                    Spacer()
+                    Text(discordManager.connectionState.label)
+                        .foregroundStyle(statusColor(for: discordManager.connectionState))
                 }
 
                 HStack {
@@ -107,7 +127,7 @@ struct DiscordSettingsView: View {
                         .foregroundStyle(.red)
                 }
 
-                Text("Membutuhkan izin satu kali di dialog aplikasi Discord desktop.")
+                Text("Voice RPC membutuhkan Application ID & Client Secret dari Discord Developer Portal (OAuth2 Redirect URI: http://127.0.0.1).")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             } header: {
@@ -120,8 +140,30 @@ struct DiscordSettingsView: View {
         }
     }
 
-    private var statusColor: Color {
-        switch discordManager.connectionState {
+    private var musicStatusLabel: String {
+        guard musicPresenceEnabled else { return "Nonaktif" }
+        switch discordManager.musicConnectionState {
+        case .connected:
+            if let player = discordManager.activePlayerName {
+                return "Terhubung · \(player)"
+            }
+            return "Terhubung"
+        case .waitingForDiscord:
+            return "Menunggu Discord…"
+        case .disabled:
+            return "Menunggu lagu diputar…"
+        case .error(let message):
+            return message
+        }
+    }
+
+    private var musicStatusColor: Color {
+        guard musicPresenceEnabled else { return .secondary }
+        return statusColor(for: discordManager.musicConnectionState)
+    }
+
+    private func statusColor(for state: DiscordIPCConnectionState) -> Color {
+        switch state {
         case .connected:
             return .green
         case .waitingForDiscord:

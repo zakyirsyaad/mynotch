@@ -213,5 +213,8 @@ extension Defaults.Keys {
     // MARK: Discord
     static let discordApplicationID = Key<String>("discordApplicationID", default: "")
     static let discordAppleMusicPresenceEnabled = Key<Bool>("discordAppleMusicPresenceEnabled", default: false)
+    static let discordMusicStatusDisplayType = Key<Int>("discordMusicStatusDisplayType", default: 0)
+    static let discordMusicShowAlbumName = Key<Bool>("discordMusicShowAlbumName", default: true)
+    static let discordMusicShowSongLink = Key<Bool>("discordMusicShowSongLink", default: true)
     static let discordVoiceEnabled = Key<Bool>("discordVoiceEnabled", default: false)
 }
