@@ -83,6 +83,8 @@ public struct DiscordPresenceActivity: Sendable, Equatable {
     public let endTimestamp: Int?
     public let largeImage: String?
     public let largeText: String?
+    public let smallImage: String?
+    public let smallText: String?
     public let statusDisplayType: DiscordStatusDisplayType?
     public let buttons: [DiscordPresenceButton]
 
@@ -94,6 +96,8 @@ public struct DiscordPresenceActivity: Sendable, Equatable {
         endTimestamp: Int? = nil,
         largeImage: String? = nil,
         largeText: String? = nil,
+        smallImage: String? = nil,
+        smallText: String? = nil,
         statusDisplayType: DiscordStatusDisplayType? = nil,
         buttons: [DiscordPresenceButton] = []
     ) {
@@ -104,6 +108,8 @@ public struct DiscordPresenceActivity: Sendable, Equatable {
         self.endTimestamp = endTimestamp
         self.largeImage = largeImage
         self.largeText = largeText
+        self.smallImage = smallImage
+        self.smallText = smallText
         self.statusDisplayType = statusDisplayType
         self.buttons = buttons
     }
@@ -140,6 +146,12 @@ public struct DiscordPresenceActivity: Sendable, Equatable {
         if let largeText, !largeText.isEmpty {
             assets["large_text"] = .string(largeText)
         }
+        if let smallImage, !smallImage.isEmpty {
+            assets["small_image"] = .string(smallImage)
+        }
+        if let smallText, !smallText.isEmpty {
+            assets["small_text"] = .string(smallText)
+        }
         if !assets.isEmpty {
             obj["assets"] = .object(assets)
         }
@@ -172,10 +184,10 @@ public enum DiscordMusicPresenceFormatter {
         guard enabled,
               let track,
               track.isPlaying,
-              DiscordMediaPlayerRegistry.resolve(
+              let player = DiscordMediaPlayerRegistry.resolve(
                   bundleIdentifier: track.bundleIdentifier,
                   customApplicationID: customApplicationID
-              ) != nil
+              )
         else {
             return nil
         }
@@ -211,14 +223,20 @@ public enum DiscordMusicPresenceFormatter {
             buttons.append(DiscordPresenceButton(label: "Listen to this song", url: url))
         }
 
+        let resolvedLargeImage = (track.artworkURL?.isEmpty == false) ? track.artworkURL : player.iconURL
+        let resolvedSmallImage = (track.artworkURL?.isEmpty == false) ? player.iconURL : nil
+        let resolvedSmallText = resolvedSmallImage != nil ? player.name : nil
+
         return DiscordPresenceActivity(
             type: 2,
             details: title,
             state: artist,
             startTimestamp: startTimestamp,
             endTimestamp: endTimestamp,
-            largeImage: track.artworkURL,
+            largeImage: resolvedLargeImage,
             largeText: album.isEmpty ? nil : album,
+            smallImage: resolvedSmallImage,
+            smallText: resolvedSmallText,
             statusDisplayType: options.statusDisplayType,
             buttons: buttons
         )

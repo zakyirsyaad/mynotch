@@ -83,6 +83,8 @@ private func makeTrack(
     #expect(json["timestamps"]?["start"] == .number(940))
     #expect(json["timestamps"]?["end"] == .number(1180))
     #expect(json["assets"]?["large_image"] == .string("https://is1-ssl.mzstatic.com/image/512x512bb.jpg"))
+    #expect(json["assets"]?["small_image"]?.stringValue?.contains("1247654840780460125") == true)
+    #expect(json["assets"]?["small_text"] == .string("Apple Music"))
     #expect(json["buttons"]?.arrayValue?.count == 1)
 }
 
@@ -124,9 +126,10 @@ private func makeTrack(
     #expect(activity.startTimestamp == nil)
     #expect(activity.endTimestamp == nil)
     #expect(activity.largeText == nil)
+    #expect(activity.largeImage?.contains("1247654840780460125") == true)
+    #expect(activity.smallImage == nil)
     #expect(activity.buttons.isEmpty)
     #expect(activity.toJSONValue()["timestamps"] == nil)
-    #expect(activity.toJSONValue()["assets"] == nil)
     #expect(activity.toJSONValue()["buttons"] == nil)
     #expect(activity.toJSONValue()["status_display_type"] == .number(2))
 }
