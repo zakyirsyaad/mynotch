@@ -69,3 +69,17 @@ private func makeTrack(
     #expect(activity.toJSONValue()["timestamps"] == nil)
     #expect(activity.toJSONValue()["assets"] == nil)
 }
+
+@Test func clampsSingleCharAndOverlongDiscordFields() throws {
+    let longTitle = String(repeating: "A", count: 150)
+    let activity = try #require(
+        DiscordMusicPresenceFormatter.activity(
+            from: makeTrack(title: longTitle, artist: "X", album: "M"),
+            enabled: true,
+            now: Date(timeIntervalSince1970: 1_000)
+        )
+    )
+    #expect(activity.details.count == 128)
+    #expect(activity.state == "X ")
+    #expect(activity.largeText == "M ")
+}

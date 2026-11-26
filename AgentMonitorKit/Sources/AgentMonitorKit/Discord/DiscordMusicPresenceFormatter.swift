@@ -116,11 +116,11 @@ public enum DiscordMusicPresenceFormatter {
             return nil
         }
 
-        let title = track.title.trimmingCharacters(in: .whitespacesAndNewlines)
+        let title = clampDiscordText(track.title)
         guard !title.isEmpty else { return nil }
 
-        let artist = track.artist.trimmingCharacters(in: .whitespacesAndNewlines)
-        let album = track.album.trimmingCharacters(in: .whitespacesAndNewlines)
+        let artist = clampDiscordText(track.artist)
+        let album = clampDiscordText(track.album)
 
         let rate = track.playbackRate > 0 ? track.playbackRate : 1.0
         let delta = max(0, now.timeIntervalSince(track.timestampDate)) * rate
@@ -148,5 +148,17 @@ public enum DiscordMusicPresenceFormatter {
             largeImage: track.artworkURL,
             largeText: album.isEmpty ? nil : album
         )
+    }
+
+    private static func clampDiscordText(_ raw: String) -> String {
+        let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return "" }
+        if trimmed.count == 1 {
+            return trimmed + " "
+        }
+        if trimmed.count > 128 {
+            return String(trimmed.prefix(128))
+        }
+        return trimmed
     }
 }

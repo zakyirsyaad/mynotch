@@ -119,12 +119,36 @@ public enum DiscordIPCFramer {
         ])
     }
 
-    public static func subscribePayload(event: String, nonce: String) -> JSONValue {
-        .object([
+    public static func subscribePayload(
+        event: String,
+        args: [String: JSONValue]? = nil,
+        nonce: String
+    ) -> JSONValue {
+        var obj: [String: JSONValue] = [
             "cmd": .string("SUBSCRIBE"),
             "evt": .string(event),
             "nonce": .string(nonce)
-        ])
+        ]
+        if let args, !args.isEmpty {
+            obj["args"] = .object(args)
+        }
+        return .object(obj)
+    }
+
+    public static func unsubscribePayload(
+        event: String,
+        args: [String: JSONValue]? = nil,
+        nonce: String
+    ) -> JSONValue {
+        var obj: [String: JSONValue] = [
+            "cmd": .string("UNSUBSCRIBE"),
+            "evt": .string(event),
+            "nonce": .string(nonce)
+        ]
+        if let args, !args.isEmpty {
+            obj["args"] = .object(args)
+        }
+        return .object(obj)
     }
 
     public static func getSelectedVoiceChannelPayload(nonce: String) -> JSONValue {

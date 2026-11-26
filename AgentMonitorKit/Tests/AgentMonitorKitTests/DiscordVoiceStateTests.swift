@@ -29,14 +29,22 @@ private func decode(_ json: String) throws -> JSONValue {
     #expect(state.isAnyoneSpeaking)
     #expect(!state.isSelfSpeaking)
 
-    // Switching channel clears old speaking users
+    // Switching channel via VOICE_CHANNEL_SELECT (Discord omits name; clears old speaking users)
     state = DiscordVoiceReducer.reducing(
         state,
-        message: try decode(#"{"evt":"VOICE_CHANNEL_SELECT","data":{"channel_id":"c2","name":"Lounge"}}"#)
+        message: try decode(#"{"evt":"VOICE_CHANNEL_SELECT","data":{"channel_id":"c2","guild_id":"g1"}}"#)
+    )
+    #expect(state.channelID == "c2")
+    #expect(state.channelName == nil)
+    #expect(!state.isAnyoneSpeaking)
+
+    // Subsequent GET_SELECTED_VOICE_CHANNEL populates channelName
+    state = DiscordVoiceReducer.reducing(
+        state,
+        message: try decode(#"{"cmd":"GET_SELECTED_VOICE_CHANNEL","data":{"id":"c2","name":"Lounge"}}"#)
     )
     #expect(state.channelID == "c2")
     #expect(state.channelName == "Lounge")
-    #expect(!state.isAnyoneSpeaking)
 
     // Leaving channel (null channel_id or null data)
     state = DiscordVoiceReducer.reducing(

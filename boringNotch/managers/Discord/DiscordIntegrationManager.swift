@@ -25,6 +25,9 @@ final class DiscordIntegrationManager: ObservableObject {
     private var pendingAuthenticateNonce: String?
     private var hasAttemptedRefreshThisConnection = false
     private var isAuthenticatedOnCurrentConnection = false
+    private var activeClientID: String = ""
+    private var subscribedSpeakingChannelID: String?
+    private var hasSubscribedGlobalVoiceEvents = false
 
     private init() {
         isVoiceAuthorized = KeychainSecretStore.load(account: KeychainSecretStore.accessTokenAccount) != nil
@@ -50,11 +53,13 @@ final class DiscordIntegrationManager: ObservableObject {
         isStarted = false
         presenceTask?.cancel()
         presenceTask = nil
+        unsubscribeVoiceEvents()
         client.stop()
         voiceState = DiscordVoiceState()
         lastSentActivity = nil
         didSendActivityOnce = false
         isAuthenticatedOnCurrentConnection = false
+        activeClientID = ""
     }
 
     func saveClientSecret(_ secret: String) throws {
@@ -102,11 +107,12 @@ final class DiscordIntegrationManager: ObservableObject {
     }
 
     func disconnectVoiceAuth() {
+        unsubscribeVoiceEvents()
         KeychainSecretStore.delete(account: KeychainSecretStore.accessTokenAccount)
         KeychainSecretStore.delete(account: KeychainSecretStore.refreshTokenAccount)
         isVoiceAuthorized = false
         isAuthenticatedOnCurrentConnection = false
-        voiceState = DiscordVoiceState()
+        voiceState = DiscordVoiceState(currentUserID: voiceState.currentUserID)
         authError = nil
     }
 
@@ -151,8 +157,12 @@ final class DiscordIntegrationManager: ObservableObject {
     }
 
     private func observeSettings() {
+        let debouncedAppID = Defaults.publisher(.discordApplicationID)
+            .map(\.newValue)
+            .debounce(for: .milliseconds(500), scheduler: RunLoop.main)
+
         Publishers.CombineLatest3(
-            Defaults.publisher(.discordApplicationID).map(\.newValue),
+            debouncedAppID,
             Defaults.publisher(.discordAppleMusicPresenceEnabled).map(\.newValue),
             Defaults.publisher(.discordVoiceEnabled).map(\.newValue)
         )
@@ -180,6 +190,7 @@ final class DiscordIntegrationManager: ObservableObject {
                 music.$elapsedTime
             )
         )
+        .combineLatest(music.$timestampDate)
         .debounce(for: .milliseconds(350), scheduler: RunLoop.main)
         .sink { [weak self] _, _ in
             self?.schedulePresenceUpdate()
@@ -196,22 +207,28 @@ final class DiscordIntegrationManager: ObservableObject {
 
         guard (musicEnabled || voiceEnabled), !clientID.isEmpty else {
             presenceTask?.cancel()
+            unsubscribeVoiceEvents()
             client.stop()
             voiceState = DiscordVoiceState()
             lastSentActivity = nil
             didSendActivityOnce = false
             isAuthenticatedOnCurrentConnection = false
+            activeClientID = ""
             connectionState = .disabled
             return
         }
 
+        let clientChanged = (clientID != activeClientID)
+        activeClientID = clientID
         client.updateClientID(clientID)
-        if connectionState == .connected {
+
+        if !clientChanged && connectionState == .connected {
             schedulePresenceUpdate()
             if voiceEnabled && !isAuthenticatedOnCurrentConnection {
                 authenticateIfPossible()
             } else if !voiceEnabled {
-                voiceState = DiscordVoiceState()
+                unsubscribeVoiceEvents()
+                voiceState = DiscordVoiceState(currentUserID: voiceState.currentUserID)
             }
         }
     }
@@ -221,6 +238,8 @@ final class DiscordIntegrationManager: ObservableObject {
         if newState != .connected {
             isAuthenticatedOnCurrentConnection = false
             hasAttemptedRefreshThisConnection = false
+            hasSubscribedGlobalVoiceEvents = false
+            subscribedSpeakingChannelID = nil
             pendingAuthorizeNonce = nil
             pendingAuthenticateNonce = nil
             lastSentActivity = nil
@@ -265,7 +284,24 @@ final class DiscordIntegrationManager: ObservableObject {
             return
         }
 
+        if evt == "READY" {
+            voiceState = DiscordVoiceReducer.reducing(voiceState, message: message)
+            return
+        }
+
+        guard isAuthenticatedOnCurrentConnection && Defaults[.discordVoiceEnabled] else {
+            return
+        }
+
+        let previousChannelID = voiceState.channelID
         voiceState = DiscordVoiceReducer.reducing(voiceState, message: message)
+
+        if voiceState.channelID != previousChannelID {
+            syncSpeakingSubscription(for: voiceState.channelID)
+            if voiceState.channelID != nil && voiceState.channelName == nil {
+                client.sendJSON(DiscordIPCFramer.getSelectedVoiceChannelPayload(nonce: UUID().uuidString))
+            }
+        }
     }
 
     private func authenticateIfPossible() {
@@ -335,15 +371,39 @@ final class DiscordIntegrationManager: ObservableObject {
     private func subscribeToVoiceEvents() {
         let events = [
             "VOICE_CHANNEL_SELECT",
-            "VOICE_SETTINGS_UPDATE",
-            "SPEAKING_START",
-            "SPEAKING_STOP"
+            "VOICE_SETTINGS_UPDATE"
         ]
         for event in events {
             client.sendJSON(DiscordIPCFramer.subscribePayload(event: event, nonce: UUID().uuidString))
         }
+        hasSubscribedGlobalVoiceEvents = true
         client.sendJSON(DiscordIPCFramer.getSelectedVoiceChannelPayload(nonce: UUID().uuidString))
         client.sendJSON(DiscordIPCFramer.getVoiceSettingsPayload(nonce: UUID().uuidString))
+    }
+
+    private func unsubscribeVoiceEvents() {
+        syncSpeakingSubscription(for: nil)
+        guard hasSubscribedGlobalVoiceEvents else { return }
+        hasSubscribedGlobalVoiceEvents = false
+        guard connectionState == .connected else { return }
+        for event in ["VOICE_CHANNEL_SELECT", "VOICE_SETTINGS_UPDATE"] {
+            client.sendJSON(DiscordIPCFramer.unsubscribePayload(event: event, nonce: UUID().uuidString))
+        }
+    }
+
+    private func syncSpeakingSubscription(for channelID: String?) {
+        guard subscribedSpeakingChannelID != channelID else { return }
+        if let oldChannelID = subscribedSpeakingChannelID, connectionState == .connected {
+            let args: [String: JSONValue] = ["channel_id": .string(oldChannelID)]
+            client.sendJSON(DiscordIPCFramer.unsubscribePayload(event: "SPEAKING_START", args: args, nonce: UUID().uuidString))
+            client.sendJSON(DiscordIPCFramer.unsubscribePayload(event: "SPEAKING_STOP", args: args, nonce: UUID().uuidString))
+        }
+        subscribedSpeakingChannelID = channelID
+        if let newChannelID = channelID, connectionState == .connected {
+            let args: [String: JSONValue] = ["channel_id": .string(newChannelID)]
+            client.sendJSON(DiscordIPCFramer.subscribePayload(event: "SPEAKING_START", args: args, nonce: UUID().uuidString))
+            client.sendJSON(DiscordIPCFramer.subscribePayload(event: "SPEAKING_STOP", args: args, nonce: UUID().uuidString))
+        }
     }
 
     private func schedulePresenceUpdate() {

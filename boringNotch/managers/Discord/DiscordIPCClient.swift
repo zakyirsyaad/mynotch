@@ -39,7 +39,12 @@ final class DiscordIPCClient {
     private var backoffSeconds: TimeInterval = 2
 
     deinit {
-        stop()
+        reconnectWorkItem?.cancel()
+        if let source = readSource {
+            source.cancel()
+        } else if socketFD >= 0 {
+            close(socketFD)
+        }
     }
 
     func start(clientID: String) {
@@ -77,8 +82,8 @@ final class DiscordIPCClient {
     }
 
     func stop() {
-        queue.sync {
-            stopLocked(state: .disabled)
+        queue.async { [weak self] in
+            self?.stopLocked(state: .disabled)
         }
     }
 
@@ -87,7 +92,9 @@ final class DiscordIPCClient {
             guard let self, self.socketFD >= 0 else { return }
             do {
                 let data = try DiscordIPCFramer.encodeJSON(value, opcode: opcode)
-                self.writeAll(data, to: self.socketFD)
+                if !self.writeAll(data, to: self.socketFD) {
+                    self.handleDisconnectLocked(errorMessage: nil)
+                }
             } catch {
                 self.logger.error("Failed to encode Discord IPC frame: \(error.localizedDescription, privacy: .public)")
             }
@@ -106,9 +113,16 @@ final class DiscordIPCClient {
         guard isRunning, !clientID.isEmpty else { return }
         teardownSocketLocked()
 
-        guard let socketPath = findDiscordSocketPath(),
-              let fd = openUnixSocket(at: socketPath)
-        else {
+        let candidatePaths = findDiscordSocketPaths()
+        var connectedFD: Int32?
+        for path in candidatePaths {
+            if let fd = openUnixSocket(at: path) {
+                connectedFD = fd
+                break
+            }
+        }
+
+        guard let fd = connectedFD else {
             emitState(.waitingForDiscord)
             scheduleReconnectLocked()
             return
@@ -182,7 +196,10 @@ final class DiscordIPCClient {
                 }
             case .ping:
                 let pong = DiscordIPCFramer.encode(opcode: .pong, payload: frame.payload)
-                _ = writeAll(pong, to: socketFD)
+                if !writeAll(pong, to: socketFD) {
+                    handleDisconnectLocked(errorMessage: nil)
+                    return
+                }
             case .close:
                 handleDisconnectLocked(errorMessage: nil)
                 return
@@ -230,32 +247,35 @@ final class DiscordIPCClient {
         }
     }
 
-    private func findDiscordSocketPath() -> String? {
-        var candidates: [String] = []
+    private func findDiscordSocketPaths() -> [String] {
+        var bases: [String] = []
         let tempDir = NSTemporaryDirectory()
         if !tempDir.isEmpty {
-            candidates.append(tempDir)
+            bases.append(tempDir)
         }
         if let envTmp = ProcessInfo.processInfo.environment["TMPDIR"], !envTmp.isEmpty {
-            candidates.append(envTmp)
+            bases.append(envTmp)
         }
-        candidates.append("/tmp")
+        bases.append("/tmp")
 
+        var seenPaths = Set<String>()
+        var results: [String] = []
         let currentUID = getuid()
-        for base in candidates {
+        for base in bases {
             let trimmedBase = base.hasSuffix("/") ? String(base.dropLast()) : base
             for index in 0..<10 {
                 let path = "\(trimmedBase)/discord-ipc-\(index)"
+                guard seenPaths.insert(path).inserted else { continue }
                 var st = stat()
                 if lstat(path, &st) == 0,
                    (st.st_mode & S_IFMT) == S_IFSOCK,
                    st.st_uid == currentUID
                 {
-                    return path
+                    results.append(path)
                 }
             }
         }
-        return nil
+        return results
     }
 
     private func openUnixSocket(at path: String) -> Int32? {
@@ -264,6 +284,10 @@ final class DiscordIPCClient {
 
         var noSigPipe: Int32 = 1
         _ = setsockopt(fd, SOL_SOCKET, SO_NOSIGPIPE, &noSigPipe, socklen_t(MemoryLayout<Int32>.size))
+
+        var timeout = timeval(tv_sec: 2, tv_usec: 0)
+        _ = setsockopt(fd, SOL_SOCKET, SO_SNDTIMEO, &timeout, socklen_t(MemoryLayout<timeval>.size))
+        _ = setsockopt(fd, SOL_SOCKET, SO_RCVTIMEO, &timeout, socklen_t(MemoryLayout<timeval>.size))
 
         var addr = sockaddr_un()
         addr.sun_family = sa_family_t(AF_UNIX)
@@ -292,6 +316,11 @@ final class DiscordIPCClient {
             close(fd)
             return nil
         }
+
+        let flags = fcntl(fd, F_GETFL, 0)
+        if flags >= 0 {
+            _ = fcntl(fd, F_SETFL, flags | O_NONBLOCK)
+        }
         return fd
     }
 
@@ -307,6 +336,12 @@ final class DiscordIPCClient {
                     totalWritten += written
                 } else if errno == EINTR {
                     continue
+                } else if errno == EAGAIN || errno == EWOULDBLOCK {
+                    var pfd = pollfd(fd: fd, events: Int16(POLLOUT), revents: 0)
+                    let ready = Darwin.poll(&pfd, 1, 500)
+                    if ready <= 0 || (pfd.revents & Int16(POLLOUT)) == 0 {
+                        return false
+                    }
                 } else {
                     return false
                 }

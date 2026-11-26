@@ -64,9 +64,7 @@ enum DiscordOAuthService {
         request.timeoutInterval = 10
         request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
 
-        var components = URLComponents()
-        components.queryItems = params.map { URLQueryItem(name: $0.key, value: $0.value) }
-        request.httpBody = Data((components.percentEncodedQuery ?? "").utf8)
+        request.httpBody = Data(formURLEncoded(params).utf8)
 
         let (data, response) = try await URLSession.shared.data(for: request)
         guard let http = response as? HTTPURLResponse else {
@@ -81,5 +79,22 @@ enum DiscordOAuthService {
             accessToken: decoded.access_token,
             refreshToken: decoded.refresh_token
         )
+    }
+
+    private static let formAllowedCharacters: CharacterSet = {
+        var allowed = CharacterSet.alphanumerics
+        allowed.insert(charactersIn: "-._~")
+        return allowed
+    }()
+
+    private static func formURLEncoded(_ params: [String: String]) -> String {
+        params
+            .sorted { $0.key < $1.key }
+            .map { key, value in
+                let encodedKey = key.addingPercentEncoding(withAllowedCharacters: formAllowedCharacters) ?? key
+                let encodedValue = value.addingPercentEncoding(withAllowedCharacters: formAllowedCharacters) ?? value
+                return "\(encodedKey)=\(encodedValue)"
+            }
+            .joined(separator: "&")
     }
 }

@@ -55,8 +55,23 @@ import Testing
     let authToken = DiscordIPCFramer.authenticatePayload(accessToken: "tok", nonce: "n4")
     #expect(authToken["cmd"] == .string("AUTHENTICATE"))
 
-    let sub = DiscordIPCFramer.subscribePayload(event: "SPEAKING_START", nonce: "n5")
+    let sub = DiscordIPCFramer.subscribePayload(
+        event: "SPEAKING_START",
+        args: ["channel_id": .string("c1")],
+        nonce: "n5"
+    )
+    #expect(sub["cmd"] == .string("SUBSCRIBE"))
     #expect(sub["evt"] == .string("SPEAKING_START"))
+    #expect(sub["args"]?["channel_id"] == .string("c1"))
+
+    let unsub = DiscordIPCFramer.unsubscribePayload(
+        event: "SPEAKING_START",
+        args: ["channel_id": .string("c1")],
+        nonce: "n5b"
+    )
+    #expect(unsub["cmd"] == .string("UNSUBSCRIBE"))
+    #expect(unsub["evt"] == .string("SPEAKING_START"))
+    #expect(unsub["args"]?["channel_id"] == .string("c1"))
 
     let getVoice = DiscordIPCFramer.getSelectedVoiceChannelPayload(nonce: "n6")
     #expect(getVoice["cmd"] == .string("GET_SELECTED_VOICE_CHANNEL"))

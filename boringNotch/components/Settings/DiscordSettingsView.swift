@@ -91,7 +91,14 @@ struct DiscordSettingsView: View {
                         Button("Hubungkan Voice RPC") {
                             discordManager.authorizeVoiceRPC()
                         }
+                        .disabled(!voiceEnabled)
                     }
+                }
+
+                if !voiceEnabled && !discordManager.isVoiceAuthorized {
+                    Text("Aktifkan toggle voice di atas terlebih dahulu untuk menghubungkan Voice RPC.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                 }
 
                 if let authError = discordManager.authError {
