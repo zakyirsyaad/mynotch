@@ -583,6 +583,13 @@ struct ContentView: View {
                 }
             }
         } else {
+            if vm.notchState == .closed {
+                withAnimation(animationSpring) {
+                    isHovering = false
+                }
+                return
+            }
+
             hoverTask = Task {
                 try? await Task.sleep(for: .milliseconds(100))
                 guard !Task.isCancelled else { return }
