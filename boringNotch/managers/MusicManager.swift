@@ -55,6 +55,7 @@ class MusicManager: ObservableObject {
     @Published var isFavoriteTrack: Bool = false
 
     private var artworkData: Data? = nil
+    private var fallbackArtworkTask: Task<Void, Never>?
 
     // Store last values at the time artwork was changed
     private var lastArtworkTitle: String = "I'm Handsome"
@@ -209,6 +210,8 @@ class MusicManager: ObservableObject {
             self.triggerFlipAnimation()
 
             if artworkChanged, let artwork = state.artwork {
+                self.fallbackArtworkTask?.cancel()
+                self.fallbackArtworkTask = nil
                 self.updateArtwork(artwork)
             } else if state.artwork == nil {
                 // Try to use app icon if no artwork but track changed
@@ -216,6 +219,7 @@ class MusicManager: ObservableObject {
                     self.usingAppIconForArtwork = true
                     self.updateAlbumArt(newAlbumArt: appIconImage)
                 }
+                self.fetchFallbackArtworkIfNeeded(title: state.title, artist: state.artist)
             }
             self.artworkData = state.artwork
 
@@ -531,6 +535,40 @@ class MusicManager: ObservableObject {
                     self?.usingAppIconForArtwork = false
                     self?.updateAlbumArt(newAlbumArt: artworkImage)
                 }
+            }
+        }
+    }
+
+    private func fetchFallbackArtworkIfNeeded(title: String, artist: String) {
+        fallbackArtworkTask?.cancel()
+        let cleanTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !cleanTitle.isEmpty else { return }
+
+        fallbackArtworkTask = Task { [weak self] in
+            let meta = await AppleMusicArtworkResolver.shared.metadata(artist: artist, title: title)
+            guard !Task.isCancelled,
+                  let urlString = meta.artworkURL,
+                  let url = URL(string: urlString)
+            else { return }
+
+            var request = URLRequest(url: url)
+            request.timeoutInterval = 5
+
+            guard let (data, response) = try? await URLSession.shared.data(for: request),
+                  let http = response as? HTTPURLResponse,
+                  (200..<300).contains(http.statusCode),
+                  !Task.isCancelled,
+                  let image = NSImage(data: data)
+            else { return }
+
+            await MainActor.run { [weak self] in
+                guard let self,
+                      self.lastArtworkTitle == title,
+                      self.lastArtworkArtist == artist,
+                      self.artworkData == nil
+                else { return }
+                self.usingAppIconForArtwork = false
+                self.updateAlbumArt(newAlbumArt: image)
             }
         }
     }
