@@ -84,6 +84,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         MusicManager.shared.destroy()
         Task { @MainActor in
             AgentMonitorManager.shared.stop()
+            DiscordIntegrationManager.shared.stop()
         }
         cleanupDragDetectors()
         cleanupWindows()
@@ -459,6 +460,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 )
             }
             monitor.start()
+            DiscordIntegrationManager.shared.start()
         }
     }
 

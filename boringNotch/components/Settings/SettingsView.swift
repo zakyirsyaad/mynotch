@@ -54,6 +54,9 @@ struct SettingsView: View {
                 NavigationLink(value: "Agents") {
                     Label("Agents", systemImage: "sparkles")
                 }
+                NavigationLink(value: "Discord") {
+                    Label("Discord", systemImage: "headphones")
+                }
                 NavigationLink(value: "Shortcuts") {
                     Label("Shortcuts", systemImage: "keyboard")
                 }
@@ -90,6 +93,8 @@ struct SettingsView: View {
                     Shelf()
                 case "Agents":
                     AgentsSettingsView()
+                case "Discord":
+                    DiscordSettingsView()
                 case "Shortcuts":
                     Shortcuts()
                 case "Extensions":

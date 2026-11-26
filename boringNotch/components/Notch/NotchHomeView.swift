@@ -423,6 +423,7 @@ struct NotchHomeView: View {
     @ObservedObject var webcamManager = WebcamManager.shared
     @ObservedObject var batteryModel = BatteryStatusViewModel.shared
     @ObservedObject var coordinator = BoringViewCoordinator.shared
+    @ObservedObject var discordManager = DiscordIntegrationManager.shared
     let albumArtNamespace: Namespace.ID
 
     var body: some View {
@@ -440,25 +441,31 @@ struct NotchHomeView: View {
     }
 
     private var mainContent: some View {
-        HStack(alignment: .top, spacing: (shouldShowCamera && Defaults[.showCalendar]) ? 10 : 15) {
-            MusicPlayerView(albumArtNamespace: albumArtNamespace)
-
-            if Defaults[.showCalendar] {
-                CalendarView()
-                    .frame(width: shouldShowCamera ? 170 : 215)
-                    .onHover { isHovering in
-                        vm.isHoveringCalendar = isHovering
-                    }
-                    .environmentObject(vm)
-                    .transition(.opacity)
+        VStack(spacing: 6) {
+            if Defaults[.discordVoiceEnabled] && discordManager.voiceState.isInVoice {
+                DiscordVoiceBarView()
             }
 
-            if shouldShowCamera {
-                CameraPreviewView(webcamManager: webcamManager)
-                    .scaledToFit()
-                    .opacity(vm.notchState == .closed ? 0 : 1)
-                    .blur(radius: vm.notchState == .closed ? 20 : 0)
-                    .animation(.interactiveSpring(response: 0.32, dampingFraction: 0.76, blendDuration: 0), value: shouldShowCamera)
+            HStack(alignment: .top, spacing: (shouldShowCamera && Defaults[.showCalendar]) ? 10 : 15) {
+                MusicPlayerView(albumArtNamespace: albumArtNamespace)
+
+                if Defaults[.showCalendar] {
+                    CalendarView()
+                        .frame(width: shouldShowCamera ? 170 : 215)
+                        .onHover { isHovering in
+                            vm.isHoveringCalendar = isHovering
+                        }
+                        .environmentObject(vm)
+                        .transition(.opacity)
+                }
+
+                if shouldShowCamera {
+                    CameraPreviewView(webcamManager: webcamManager)
+                        .scaledToFit()
+                        .opacity(vm.notchState == .closed ? 0 : 1)
+                        .blur(radius: vm.notchState == .closed ? 20 : 0)
+                        .animation(.interactiveSpring(response: 0.32, dampingFraction: 0.76, blendDuration: 0), value: shouldShowCamera)
+                }
             }
         }
         .transition(.asymmetric(insertion: .opacity.combined(with: .move(edge: .top)), removal: .opacity))

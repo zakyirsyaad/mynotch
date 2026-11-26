@@ -9,6 +9,7 @@
 /* Begin PBXBuildFile section */
 		A10000032F00000100000001 /* AgentMonitorKit in Frameworks */ = {isa = PBXBuildFile; productRef = A10000022F00000100000001 /* AgentMonitorKit */; };
 		A10000072F00000100000001 /* AgentsSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000062F00000100000001 /* AgentsSettingsView.swift */; };
+		A20000042F00000100000001 /* DiscordSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000032F00000100000001 /* DiscordSettingsView.swift */; };
 		1100290C2E847E2800035A57 /* NSItemProvider+LoadHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1100290B2E847E2800035A57 /* NSItemProvider+LoadHelpers.swift */; };
 		110029272E84FD4C00035A57 /* TemporaryFileStorageService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 110029262E84FD4C00035A57 /* TemporaryFileStorageService.swift */; };
 		1100292A2E8691B400035A57 /* FileShareView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 110029292E8691B400035A57 /* FileShareView.swift */; };
@@ -184,6 +185,7 @@
 
 /* Begin PBXFileReference section */
 		A10000062F00000100000001 /* AgentsSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AgentsSettingsView.swift; sourceTree = "<group>"; };
+		A20000032F00000100000001 /* DiscordSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiscordSettingsView.swift; sourceTree = "<group>"; };
 		1100290B2E847E2800035A57 /* NSItemProvider+LoadHelpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "NSItemProvider+LoadHelpers.swift"; sourceTree = "<group>"; };
 		110029262E84FD4C00035A57 /* TemporaryFileStorageService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TemporaryFileStorageService.swift; sourceTree = "<group>"; };
 		110029292E8691B400035A57 /* FileShareView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileShareView.swift; sourceTree = "<group>"; };
@@ -327,6 +329,8 @@
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		A10000042F00000100000001 /* AgentMonitor */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = managers/AgentMonitor; sourceTree = "<group>"; };
 		A10000052F00000100000001 /* Agents */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = components/Agents; sourceTree = "<group>"; };
+		A20000012F00000100000001 /* Discord */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = managers/Discord; sourceTree = "<group>"; };
+		A20000022F00000100000001 /* Discord */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = components/Discord; sourceTree = "<group>"; };
 		112FB72F2CCF12CC0015238C /* private */ = {isa = PBXFileSystemSynchronizedRootGroup; explicitFileTypes = {}; explicitFolders = (); path = private; sourceTree = "<group>"; };
 		11F748502EC9AABA00F841DB /* BoringNotchXPCHelper */ = {isa = PBXFileSystemSynchronizedRootGroup; exceptions = (11F7485C2EC9AABA00F841DB /* PBXFileSystemSynchronizedBuildFileExceptionSet */, ); explicitFileTypes = {}; explicitFolders = (); path = BoringNotchXPCHelper; sourceTree = "<group>"; };
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -591,6 +595,8 @@
 				112FB72F2CCF12CC0015238C /* private */,
 				A10000042F00000100000001 /* AgentMonitor */,
 				A10000052F00000100000001 /* Agents */,
+				A20000012F00000100000001 /* Discord */,
+				A20000022F00000100000001 /* Discord */,
 				11CC44A12CEE614100C7244B /* BoringViewCoordinator.swift */,
 			);
 			path = boringNotch;
@@ -728,6 +734,7 @@
 				11F748832ECB27DC00F841DB /* MusicSlotConfigurationView.swift */,
 				11C5E3152DFE88510065821E /* SettingsView.swift */,
 				A10000062F00000100000001 /* AgentsSettingsView.swift */,
+				A20000032F00000100000001 /* DiscordSettingsView.swift */,
 				11C5E3112DFE85970065821E /* SettingsWindowController.swift */,
 				B1D6FD422C6603730015F173 /* SoftwareUpdater.swift */,
 				B1B112902C6A572100093D8F /* EditPanelView.swift */,
@@ -810,6 +817,8 @@
 				112FB72F2CCF12CC0015238C /* private */,
 				A10000042F00000100000001 /* AgentMonitor */,
 				A10000052F00000100000001 /* Agents */,
+				A20000012F00000100000001 /* Discord */,
+				A20000022F00000100000001 /* Discord */,
 			);
 			name = boringNotch;
 			packageProductDependencies = (
@@ -919,6 +928,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				A10000072F00000100000001 /* AgentsSettingsView.swift in Sources */,
+				A20000042F00000100000001 /* DiscordSettingsView.swift in Sources */,
 				115C12EC2ED3D003009754CA /* OpenNotchHUD.swift in Sources */,
 				14C08BB92C8DE4B1000F8AA0 /* BoringCalendar.swift in Sources */,
 				5955950D2E900ED800C66711 /* ApplicationRelauncher.swift in Sources */,

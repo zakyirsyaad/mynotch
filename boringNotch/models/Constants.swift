@@ -209,4 +209,9 @@ extension Defaults.Keys {
     static let agentNotifyError = Key<Bool>("agentNotifyError", default: true)
     static let agentNotifyDone = Key<Bool>("agentNotifyDone", default: true)
     static let agentCustomRules = Key<[CustomAgentRule]>("agentCustomRules", default: [])
+
+    // MARK: Discord
+    static let discordApplicationID = Key<String>("discordApplicationID", default: "")
+    static let discordAppleMusicPresenceEnabled = Key<Bool>("discordAppleMusicPresenceEnabled", default: false)
+    static let discordVoiceEnabled = Key<Bool>("discordVoiceEnabled", default: false)
 }
